@@ -1,5 +1,7 @@
 from __future__ import annotations
 from abc import ABC, abstractclassmethod, abstractmethod, abstractproperty
+from enum import EnumMeta
+from uuid import UUID
 from nacl.signing import SigningKey, VerifyKey
 
 
@@ -153,4 +155,46 @@ class AbstractSingleSigKey(ABC):
 
     @abstractmethod
     def sign_message(self, M: bytes) -> AbstractSignature:
+        ...
+
+
+class AbstractProtocolState(EnumMeta):
+        ...
+
+
+class AbstractProtocolMessage(ABC):
+    @abstractmethod
+    def __bytes__(self) -> bytes:
+        ...
+
+    @abstractmethod
+    def __eq__(self, other) -> bool:
+        ...
+
+    @abstractclassmethod
+    def from_bytes(cls, data: bytes) -> AbstractProtocolMessage:
+        ...
+
+    @abstractmethod
+    def __str__(self) -> str:
+        ...
+
+    @abstractmethod
+    def parse_message(self) -> None:
+        ...
+
+    @abstractmethod
+    def add_signature(self, skey: SigningKey) -> AbstractProtocolMessage:
+        ...
+
+    @abstractmethod
+    def check_signature(self) -> bool:
+        ...
+
+    @abstractclassmethod
+    def from_str(cls, data: str) -> AbstractProtocolMessage:
+        ...
+
+    @abstractclassmethod
+    def create(cls, id: UUID, state: AbstractProtocolState, data: list) -> AbstractProtocolMessage:
         ...

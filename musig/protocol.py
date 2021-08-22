@@ -3,8 +3,9 @@ from base64 import b64encode, b64decode
 from enum import Enum
 from hashlib import new
 from math import ceil, log2
-from musig.helpers import bytes_are_same
 from musig import Nonce, NonceCommitment, PartialSignature, Signature
+from musig.abstractclasses import AbstractProtocolMessage
+from musig.helpers import bytes_are_same
 from nacl.signing import SigningKey, VerifyKey, SignedMessage as NaclSignedMessage
 from uuid import UUID
 
@@ -64,7 +65,7 @@ class ProtocolError(Exception):
         return cls(message, protocol_state)
 
 
-class ProtocolMessage(dict):
+class ProtocolMessage(dict, AbstractProtocolMessage):
     """A class that handles packing and unpacking messages for mediating the
         protocol. This should be sufficient, but any other system can be used as
         long as the SigningSession methods are called in the right manner and
