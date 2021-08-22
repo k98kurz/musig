@@ -1,7 +1,9 @@
 from context import musig
 from json import dumps, loads
-from musig.Signature import Signature
+from musig.Nonce import Nonce
 from musig.PartialSignature import PartialSignature
+from musig.PublicKey import PublicKey
+from musig.Signature import Signature
 from nacl.signing import SigningKey
 import inspect
 import musig
@@ -23,7 +25,6 @@ class TestMuSigSomething(unittest.TestCase):
         cls.gvkey = 'eecb56e70d2405a849aa5e55b6e2f96aac2957dba72f8c289994c842e33ec477'
 
     def test_Signature_is_a_class(self):
-        assert hasattr(musig, 'Signature')
         assert inspect.isclass(Signature)
 
     def test_Signature_init_raises_ValueError_when_called_without_proper_params(self):
@@ -35,8 +36,8 @@ class TestMuSigSomething(unittest.TestCase):
             Signature({'a','b'})
 
     def test_Signature_instances_have_correct_attributes(self):
-        pkey = musig.PublicKey([self.signing_keys[0].verify_key])
-        n1 = musig.Nonce()
+        pkey = PublicKey([self.signing_keys[0].verify_key])
+        n1 = Nonce()
         M = b'hello world'
         ps1 = PartialSignature.create(self.signing_keys[0], n1.r, pkey.L,
             pkey, n1.R, M)
@@ -61,8 +62,8 @@ class TestMuSigSomething(unittest.TestCase):
             Signature.deserialize({'a': 'b'})
 
     def test_Signature_instances_serialize_and_deserialize_properly(self):
-        pkey = musig.PublicKey([self.signing_keys[0].verify_key])
-        n1 = musig.Nonce()
+        pkey = PublicKey([self.signing_keys[0].verify_key])
+        n1 = Nonce()
         M = b'hello world'
         ps1 = PartialSignature.create(self.signing_keys[0], n1.r, pkey.L,
             pkey, n1.R, M)
@@ -85,8 +86,8 @@ class TestMuSigSomething(unittest.TestCase):
 
     def test_Signature_create_raises_ValueError_when_supplied_invalid_params(self):
         M = b'hello world'
-        n = musig.Nonce()
-        pkey = musig.PublicKey([s.verify_key for s in self.signing_keys])
+        n = Nonce()
+        pkey = PublicKey([s.verify_key for s in self.signing_keys])
         ps = PartialSignature.create(self.signing_keys[0], n.r, pkey.L,
             pkey, n.R, M)
         with self.assertRaises(ValueError):

@@ -1,10 +1,11 @@
 from context import musig
 from enum import Enum
 from json import dumps, loads
+from musig.Nonce import Nonce
+from musig.PartialSignature import PartialSignature
+from musig.PublicKey import PublicKey
 from nacl.signing import SigningKey
 import inspect
-import musig
-from musig.PartialSignature import PartialSignature
 import unittest
 
 
@@ -22,7 +23,6 @@ class TestMuSigPartialSignature(unittest.TestCase):
         cls.verify_keys = [sk.verify_key for sk in cls.signing_keys]
 
     def test_PartialSignature_is_a_class(self):
-        assert hasattr(musig, 'PartialSignature')
         assert inspect.isclass(PartialSignature)
 
     def test_PartialSignature_init_raises_ValueError_when_called_without_param(self):
@@ -30,8 +30,8 @@ class TestMuSigPartialSignature(unittest.TestCase):
             PartialSignature()
 
     def test_PartialSignature_instances_have_correct_attributes(self):
-        pkey = musig.PublicKey(self.verify_keys)
-        n = musig.Nonce()
+        pkey = PublicKey(self.verify_keys)
+        n = Nonce()
         psig = PartialSignature.create(self.signing_keys[0], n.r, pkey.L,
             pkey, n.R, b'hello world')
         assert hasattr(psig, 'c_i') and type(psig.c_i) is bytes
@@ -56,8 +56,8 @@ class TestMuSigPartialSignature(unittest.TestCase):
             PartialSignature.deserialize({'a':'b'})
 
     def test_PartialSignature_instances_serialize_and_deserialize_properly(self):
-        pkey = musig.PublicKey(self.verify_keys)
-        n = musig.Nonce()
+        pkey = PublicKey(self.verify_keys)
+        n = Nonce()
         ps0 = PartialSignature.create(self.signing_keys[0], n.r, pkey.L,
             pkey, n.R, b'hello world')
         str1 = str(ps0)
@@ -77,8 +77,8 @@ class TestMuSigPartialSignature(unittest.TestCase):
         assert ps3 == ps4
 
     def test_PartialSignature_instances_can_be_members_of_sets(self):
-        pkey = musig.PublicKey(self.verify_keys)
-        n1, n2, n3 = musig.Nonce(), musig.Nonce(), musig.Nonce()
+        pkey = PublicKey(self.verify_keys)
+        n1, n2, n3 = Nonce(), Nonce(), Nonce()
         ps1 = PartialSignature.create(self.signing_keys[0], n1.r, pkey.L,
             pkey, n1.R, b'hello world')
         ps2 = PartialSignature.create(self.signing_keys[1], n2.r, pkey.L,

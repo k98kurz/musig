@@ -1,12 +1,13 @@
 from __future__ import annotations
 from base64 import b64encode, b64decode
 from json import loads
-from musig import PublicKey, bytes_are_same, derive_key_from_seed, derive_challenge
+from musig.AbstractClasses import AbstractPublicKey, AbstractPartialSignature
+from musig.helpers import bytes_are_same, derive_key_from_seed, derive_challenge
 from nacl.signing import SigningKey
 import nacl.bindings
 
 
-class PartialSignature(dict):
+class PartialSignature(dict, AbstractPartialSignature):
     """A class that handles creation, serialization, and deserialization of
         partial signatures used to create MuSig aggregate signatures.
     """
@@ -132,7 +133,7 @@ class PartialSignature(dict):
             raise ValueError('unknown/invalid serialization')
 
     @classmethod
-    def create(cls, skey: SigningKey, r: bytes, L: bytes, X: PublicKey,
+    def create(cls, skey: SigningKey, r: bytes, L: bytes, X: AbstractPublicKey,
             R: bytes, M: bytes) -> dict:
         """Create a partial signature from skey, r (nonce), L (key set encoding),
             X (aggregate key), R (aggregate public nonce), and M (message).

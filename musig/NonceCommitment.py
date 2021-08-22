@@ -1,11 +1,11 @@
 from __future__ import annotations
 from base64 import b64encode, b64decode
 from json import loads
+from musig.AbstractClasses import AbstractNonce, AbstractNonceCommitment
 from musig.helpers import bytes_are_same, H_small
-from musig.Nonce import Nonce
 
 
-class NonceCommitment(dict):
+class NonceCommitment(dict, AbstractNonceCommitment):
     """A class that handles generating, serializing, and deserializing nonce
         commitments.
     """
@@ -18,7 +18,7 @@ class NonceCommitment(dict):
         """
         if data is None:
             raise ValueError('cannot instantiate an empty NonceCommitment')
-        elif isinstance(data, Nonce):
+        elif isinstance(data, AbstractNonce):
             self._HR = H_small(data.R)
         elif isinstance(data, bytes):
             self._HR = data
@@ -65,11 +65,11 @@ class NonceCommitment(dict):
         """Make a copy without serializing and deserializing."""
         return NonceCommitment({**self})
 
-    def is_valid_for(self, nonce: Nonce) -> bool:
+    def is_valid_for(self, nonce: AbstractNonce) -> bool:
         """Checks if the NonceCommitment is valid for a specific Nonce.
             Comparison is done via xor'ing bytes to avoid timing attacks.
         """
-        if not isinstance(nonce, Nonce):
+        if not isinstance(nonce, AbstractNonce):
             raise ValueError('supplied nonce must be an instance of Nonce')
 
         return bytes_are_same(H_small(nonce.R), self.HR)

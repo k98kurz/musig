@@ -1,13 +1,13 @@
 from __future__ import annotations
 from base64 import b64encode, b64decode
 from json import loads
+from musig.AbstractClasses import AbstractPublicKey, AbstractSignature
 from musig.helpers import aggregate_points, bytes_are_same, H_agg, H_sig, H_small
-from musig.Signature import Signature
 from nacl.signing import VerifyKey
 import nacl.bindings
 
 
-class PublicKey(dict):
+class PublicKey(dict, AbstractPublicKey):
     """A class that aggregates the public keys of participants of a Session
         and verifies Signatures.
     """
@@ -116,7 +116,7 @@ class PublicKey(dict):
             else:
                 raise ValueError('unknown/invalid serialization')
 
-    def verify(self, sig: Signature) -> bool:
+    def verify(self, sig: AbstractSignature) -> bool:
         """Verify a signature is valid for this PublicKey."""
         X = bytes(self.gvkey)
         s = sig.s

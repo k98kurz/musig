@@ -2,11 +2,12 @@ from __future__ import annotations
 from base64 import b64encode, b64decode
 from json import loads
 from musig.helpers import bytes_are_same
+from musig.AbstractClasses import AbstractSignature, AbstractPartialSignature
 from musig.PartialSignature import PartialSignature
 import nacl.bindings
 
 
-class Signature(dict):
+class Signature(dict, AbstractSignature):
     """A class that sums PartialSignatures into a full Signature."""
     def __init__(self, data=None) -> None:
         """Initialize an instance with params for the `create` method or
@@ -127,7 +128,7 @@ class Signature(dict):
             raise ValueError('parts must be list or tuple of PartialSignature objects')
 
         for p in parts:
-            if not isinstance(p, PartialSignature):
+            if not isinstance(p, AbstractPartialSignature):
                 raise ValueError('parts must be list or tuple of PartialSignature objects')
 
         # sum the partial signatures
