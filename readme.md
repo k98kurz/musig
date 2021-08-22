@@ -20,6 +20,15 @@ rest of the SDK.
 
 Installation instructions will be here once the package is published to pypi.
 
+# Testing
+
+Open a terminal in the root directory and run the following:
+
+```
+cd tests/
+python -m unittest
+```
+
 # Usage
 
 Usage instructions will be here once the refactoring is complete.
