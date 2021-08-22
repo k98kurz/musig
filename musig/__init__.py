@@ -7,8 +7,8 @@ from musig.constants import (
     MAX_WAIT_TIME_FOR_PUBLIC_NONCES,
     MAX_WAIT_TIME_FOR_PARTIAL_SIGS,
 )
-from musig.Nonce import Nonce
-from musig.NonceCommitment import NonceCommitment
-from musig.PartialSignature import PartialSignature
-from musig.PublicKey import PublicKey
-from musig.Signature import Signature
+from musig.nonce import Nonce
+from musig.noncecommitment import NonceCommitment
+from musig.partialsignature import PartialSignature
+from musig.publickey import PublicKey
+from musig.signature import Signature

@@ -1,6 +1,6 @@
 from context import musig
 from json import dumps, loads
-from musig.Nonce import Nonce
+from musig import Nonce
 from nacl.signing import SigningKey
 import inspect
 import nacl.bindings

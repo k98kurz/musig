@@ -1,7 +1,6 @@
 from context import musig
 from json import dumps, loads
-from musig.Nonce import Nonce
-from musig.NonceCommitment import NonceCommitment
+from musig import Nonce, NonceCommitment
 import inspect
 import unittest
 

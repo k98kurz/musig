@@ -1,9 +1,6 @@
 from context import musig
 from json import dumps, loads
-from musig.Nonce import Nonce
-from musig.PartialSignature import PartialSignature
-from musig.PublicKey import PublicKey
-from musig.Signature import Signature
+from musig import Nonce, PartialSignature, PublicKey, Signature
 from nacl.signing import SigningKey
 import inspect
 import musig

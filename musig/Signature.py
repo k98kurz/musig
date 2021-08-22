@@ -2,8 +2,8 @@ from __future__ import annotations
 from base64 import b64encode, b64decode
 from json import loads
 from musig.helpers import bytes_are_same
-from musig.AbstractClasses import AbstractSignature, AbstractPartialSignature
-from musig.PartialSignature import PartialSignature
+from musig.abstractclasses import AbstractSignature, AbstractPartialSignature
+from musig.partialsignature import PartialSignature
 import nacl.bindings
 
 

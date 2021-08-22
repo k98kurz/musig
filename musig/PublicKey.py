@@ -1,7 +1,7 @@
 from __future__ import annotations
 from base64 import b64encode, b64decode
 from json import loads
-from musig.AbstractClasses import AbstractPublicKey, AbstractSignature
+from musig.abstractclasses import AbstractPublicKey, AbstractSignature
 from musig.helpers import aggregate_points, bytes_are_same, H_agg, H_sig, H_small
 from nacl.signing import VerifyKey
 import nacl.bindings

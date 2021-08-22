@@ -1,6 +1,6 @@
 from context import musig
 from json import dumps, loads
-from musig.PublicKey import PublicKey
+from musig import PublicKey
 from nacl.signing import SigningKey
 import inspect
 import unittest
