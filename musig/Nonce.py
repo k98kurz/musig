@@ -1,7 +1,7 @@
 from __future__ import annotations
 from base64 import b64encode, b64decode
 from json import loads
-from musig.helpers import *
+from musig.helpers import aggregate_points, bytes_are_same, clamp_scalar
 from secrets import token_bytes
 import nacl.bindings
 
