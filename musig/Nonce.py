@@ -1,6 +1,6 @@
 from __future__ import annotations
 from base64 import b64encode, b64decode
-from json import dumps, loads
+from json import loads
 from musig.helpers import *
 from secrets import token_bytes
 import nacl.bindings

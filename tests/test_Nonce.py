@@ -1,9 +1,6 @@
 from context import musig
-from enum import Enum
 from json import dumps, loads
-from nacl.signing import SigningKey, VerifyKey, SignedMessage as NaclSignedMessage
-from time import time, sleep
-from uuid import UUID, uuid4
+from nacl.signing import SigningKey
 import inspect
 import nacl.bindings
 import unittest
@@ -21,8 +18,6 @@ class TestMuSigNonce(unittest.TestCase):
         cls.seeds = [bytes.fromhex(seed) for seed in cls.seeds]
         cls.signing_keys = [SigningKey(seed) for seed in cls.seeds]
         cls.verify_keys = [sk.verify_key for sk in cls.signing_keys]
-        cls.gvkey = 'eecb56e70d2405a849aa5e55b6e2f96aac2957dba72f8c289994c842e33ec477'
-        cls.uuid = uuid4()
 
     def test_Nonce_is_a_class(self):
         assert hasattr(musig, 'Nonce')
