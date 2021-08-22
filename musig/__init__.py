@@ -12,3 +12,4 @@ from musig.noncecommitment import NonceCommitment
 from musig.partialsignature import PartialSignature
 from musig.publickey import PublicKey
 from musig.signature import Signature
+from musig.singlesigkey import SingleSigKey

@@ -140,3 +140,17 @@ class AbstractSignature(ABC):
     @abstractproperty
     def parts(self):
         ...
+
+
+class AbstractSingleSigKey(ABC):
+    @abstractmethod
+    def serialize(self) -> str:
+        ...
+
+    @abstractclassmethod
+    def deserialize(cls, data) -> AbstractSingleSigKey:
+        ...
+
+    @abstractmethod
+    def sign_message(self, M: bytes) -> AbstractSignature:
+        ...
