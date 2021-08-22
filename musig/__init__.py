@@ -13,3 +13,4 @@ from musig.partialsignature import PartialSignature
 from musig.publickey import PublicKey
 from musig.signature import Signature
 from musig.singlesigkey import SingleSigKey
+from musig.protocolstate import ProtocolState

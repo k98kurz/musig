@@ -1,0 +1,33 @@
+from enum import Enum
+
+
+class ProtocolState(Enum):
+    """An enum containing all of the byte representations of possible protocol
+        states as encoded in ProtocolMessage or referenced in SigningSession.
+    """
+    EMPTY = 0x00
+    INITIALIZED = 0x10
+    AWAITING_PARTICIPANT_KEY = 0x11
+    ACK_PARTICIPANT_KEY = 0x12
+    REJECT_PARTICIPANT_KEY = 0x1f
+    AWAITING_COMMITMENT = 0x20
+    ACK_COMMITMENT = 0x21
+    TIME_EXCEEDED_AWAITING_COMMITMENT = 0x2e
+    REJECT_COMMITMENT = 0x2f
+    SENDING_COMMITMENT = 0x30
+    AWAITING_MESSAGE = 0x40
+    ACK_MESSAGE = 0x41
+    REJECT_MESSAGE = 0x4f
+    SENDING_MESSAGE = 0x50
+    AWAITING_NONCE = 0x60
+    ACK_NONCE = 0x61
+    TIME_EXCEEDED_AWAITING_NONCE = 0x6e
+    REJECT_NONCE = 0x6f
+    SENDING_NONCE = 0x70
+    AWAITING_PARTIAL_SIGNATURE = 0x80
+    ACK_PARTIAL_SIGNATURE = 0x81
+    TIME_EXCEEDED_AWAITING_PARTIAL_SIGNATURE = 0x8e
+    REJECT_PARTIAL_SIGNATURE = 0x8f
+    SENDING_PARTIAL_SIGNATURE = 0x90
+    COMPLETED = 0xe0
+    ABORTED = 0xff
