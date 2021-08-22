@@ -9,7 +9,7 @@ rest of the SDK.
 
 # Status
 
-- [] Migrate over all files.
+- [x] Migrate over all classes and functions.
 - [] Define abstract classes for type checking.
 - [] Standardize and clean up serialization/deserialization.
 - [] General code cleanup.
