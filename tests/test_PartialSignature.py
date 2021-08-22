@@ -1,7 +1,5 @@
 from context import musig
-from enum import Enum
 from json import dumps, loads
-from musig import Nonce, PartialSignature, PublicKey
 from nacl.signing import SigningKey
 import inspect
 import unittest
@@ -21,16 +19,16 @@ class TestMuSigPartialSignature(unittest.TestCase):
         cls.verify_keys = [sk.verify_key for sk in cls.signing_keys]
 
     def test_PartialSignature_is_a_class(self):
-        assert inspect.isclass(PartialSignature)
+        assert inspect.isclass(musig.PartialSignature)
 
     def test_PartialSignature_init_raises_ValueError_when_called_without_param(self):
         with self.assertRaises(ValueError):
-            PartialSignature()
+            musig.PartialSignature()
 
     def test_PartialSignature_instances_have_correct_attributes(self):
-        pkey = PublicKey(self.verify_keys)
-        n = Nonce()
-        psig = PartialSignature.create(self.signing_keys[0], n.r, pkey.L,
+        pkey = musig.PublicKey(self.verify_keys)
+        n = musig.Nonce()
+        psig = musig.PartialSignature.create(self.signing_keys[0], n.r, pkey.L,
             pkey, n.R, b'hello world')
         assert hasattr(psig, 'c_i') and type(psig.c_i) is bytes
         assert hasattr(psig, 's_i') and type(psig.s_i) is bytes
@@ -39,32 +37,32 @@ class TestMuSigPartialSignature(unittest.TestCase):
 
     def test_PartialSignature_deserialize_raises_ValueError_when_given_invalid_serialization(self):
         with self.assertRaises(ValueError):
-            PartialSignature.deserialize(b'invalid bytes')
+            musig.PartialSignature.deserialize(b'invalid bytes')
         with self.assertRaises(ValueError):
-            PartialSignature.deserialize('invalid str')
+            musig.PartialSignature.deserialize('invalid str')
         with self.assertRaises(ValueError):
-            PartialSignature.deserialize('invalid.str')
+            musig.PartialSignature.deserialize('invalid.str')
         with self.assertRaises(ValueError):
-            PartialSignature.deserialize([])
+            musig.PartialSignature.deserialize([])
         with self.assertRaises(ValueError):
-            PartialSignature.deserialize(('',''))
+            musig.PartialSignature.deserialize(('',''))
         with self.assertRaises(ValueError):
-            PartialSignature.deserialize({'a','b'})
+            musig.PartialSignature.deserialize({'a','b'})
         with self.assertRaises(ValueError):
-            PartialSignature.deserialize({'a':'b'})
+            musig.PartialSignature.deserialize({'a':'b'})
 
     def test_PartialSignature_instances_serialize_and_deserialize_properly(self):
-        pkey = PublicKey(self.verify_keys)
-        n = Nonce()
-        ps0 = PartialSignature.create(self.signing_keys[0], n.r, pkey.L,
+        pkey = musig.PublicKey(self.verify_keys)
+        n = musig.Nonce()
+        ps0 = musig.PartialSignature.create(self.signing_keys[0], n.r, pkey.L,
             pkey, n.R, b'hello world')
         str1 = str(ps0)
         str2 = repr(ps0)
         js = dumps(ps0)
-        ps1 = PartialSignature(str1)
-        ps2 = PartialSignature(str2)
-        ps3 = PartialSignature(loads(js))
-        ps4 = PartialSignature('json.' + js)
+        ps1 = musig.PartialSignature(str1)
+        ps2 = musig.PartialSignature(str2)
+        ps3 = musig.PartialSignature(loads(js))
+        ps4 = musig.PartialSignature('json.' + js)
 
         assert type(str1) is str and str1[:2] == '16'
         assert type(str2) is str and str2[:2] == '64'
@@ -75,15 +73,15 @@ class TestMuSigPartialSignature(unittest.TestCase):
         assert ps3 == ps4
 
     def test_PartialSignature_instances_can_be_members_of_sets(self):
-        pkey = PublicKey(self.verify_keys)
-        n1, n2, n3 = Nonce(), Nonce(), Nonce()
-        ps1 = PartialSignature.create(self.signing_keys[0], n1.r, pkey.L,
+        pkey = musig.PublicKey(self.verify_keys)
+        n1, n2, n3 = musig.Nonce(), musig.Nonce(), musig.Nonce()
+        ps1 = musig.PartialSignature.create(self.signing_keys[0], n1.r, pkey.L,
             pkey, n1.R, b'hello world')
-        ps2 = PartialSignature.create(self.signing_keys[1], n2.r, pkey.L,
+        ps2 = musig.PartialSignature.create(self.signing_keys[1], n2.r, pkey.L,
             pkey, n2.R, b'hello world')
-        ps3 = PartialSignature.create(self.signing_keys[2], n3.r, pkey.L,
+        ps3 = musig.PartialSignature.create(self.signing_keys[2], n3.r, pkey.L,
             pkey, n3.R, b'hello world')
-        ps33 = PartialSignature(str(ps3))
+        ps33 = musig.PartialSignature(str(ps3))
 
         pses = set([ps1, ps2, ps3, ps33])
         assert len(pses) == 3
