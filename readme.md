@@ -10,11 +10,11 @@ rest of the SDK.
 # Status
 
 - [x] Migrate over all classes and functions.
-- [] Define abstract classes for type checking.
-- [] Standardize and clean up serialization/deserialization.
-- [] General code cleanup.
-- [] Full documentation.
-- [] Migrate final module back into Pycelium-SDK.
+- [ ] Define abstract classes for type checking.
+- [ ] Standardize and clean up serialization/deserialization.
+- [ ] General code cleanup.
+- [ ] Full documentation.
+- [ ] Migrate final module back into Pycelium-SDK.
 
 # Installation
 
