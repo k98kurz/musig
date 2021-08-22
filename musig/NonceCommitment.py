@@ -2,7 +2,7 @@ from __future__ import annotations
 from base64 import b64encode, b64decode
 from json import loads
 from musig.helpers import bytes_are_same, H_small
-from musig import Nonce
+from musig.Nonce import Nonce
 
 
 class NonceCommitment(dict):
