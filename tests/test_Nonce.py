@@ -18,6 +18,16 @@ class TestMuSigNonce(unittest.TestCase):
         assert hasattr(nonce, 'R')
         assert type(nonce.R) is bytes
         assert nacl.bindings.crypto_core_ed25519_is_valid_point(nonce.R)
+        assert 'r' in nonce
+        assert type(nonce['r']) is str
+        assert 'R' in nonce
+        assert type(nonce['R']) is str
+
+    def test_Nonce_instance_cannot_set_key_other_than_r_and_R(self):
+        nonce = musig.Nonce()
+        nonce['arbitrary_key'] = 'arbitrary value'
+        assert 'arbitrary_key' not in nonce
+        assert not hasattr(nonce, 'arbitrary_key')
 
     def test_Nonce_instances_add_together_and_return_point(self):
         n1 = musig.Nonce()
@@ -39,75 +49,49 @@ class TestMuSigNonce(unittest.TestCase):
         assert n1.r is None
         assert type(n1.R) is bytes
 
-    def test_Nonce_deserialize_raises_ValueError_when_given_invalid_str_data(self):
-        with self.assertRaises(ValueError):
-            musig.Nonce.deserialize('invalid input')
-        with self.assertRaises(ValueError):
-            musig.Nonce.deserialize('invalid.input')
+    def test_Nonce_from_bytes_raises_TypeError_or_ValueError_when_given_invalid_data(self):
+        with self.assertRaises(TypeError) as err:
+            musig.Nonce.from_bytes('not bytes')
+        assert str(err.exception) == 'cannot call from_bytes with non-bytes param'
+        with self.assertRaises(ValueError) as err:
+            musig.Nonce.from_bytes(b'not len 32')
+        assert str(err.exception) == 'byte length must be 32 or 33'
 
     def test_Nonce_instances_serialize_and_deserialize_properly(self):
         n0 = musig.Nonce()
-        str1 = n0.__str__()
-        str2 = n0.__repr__()
-        str3 = n0.serialize()
+        bts = bytes(n0)
+        str1 = str(n0)
         js = dumps(n0)
-        str4 = 'json.'+js
-        n1 = musig.Nonce(str1)
-        n2 = musig.Nonce(str2)
-        n3 = musig.Nonce(str3)
-        n4 = musig.Nonce(str4)
-        n5 = musig.Nonce(loads(js))
+        n1 = musig.Nonce.from_bytes(bts)
+        n2 = musig.Nonce.from_str(str1)
+        n3 = musig.Nonce(loads(js))
 
-        assert type(str1) is str and str1[:2] == '16'
-        assert type(str2) is str and str2[:2] == '64'
-        assert type(str3) is str and str3[:2] == '64'
+        assert type(bts) is bytes
+        assert type(str1) is str
         assert type(js) is str
         assert n0.r == n1.r and n0.R == n1.R
         assert n0.r == n2.r and n0.R == n2.R
         assert n0.r == n3.r and n0.R == n3.R
-        assert n0.r == n4.r and n0.R == n4.R
-        assert n0.r == n5.r and n0.R == n5.R
-
-    def test_Nonce_instance_bytes_result_instantiates_public_value(self):
-        n = musig.Nonce()
-        n2 = musig.Nonce(bytes(n))
-        assert n2.R == n.R
-        assert n2.r is None
 
     def test_Nonce_instances_with_only_public_value_serialize_and_deserialize_properly(self):
-        n0 = musig.Nonce(musig.Nonce().R)
-        n00 = musig.Nonce().public()
-        str1 = n0.__str__()
-        str11 = n00.__str__()
-        str2 = n0.__repr__()
-        str22 = n00.__repr__()
+        n0 = musig.Nonce().public()
+        bts1 = bytes(n0)
+        str1 = str(n0)
         js0 = dumps(n0)
-        js00 = dumps(n00)
-        str3 = 'json.'+js0
-        str33 = 'json.'+js00
-        n1 = musig.Nonce(str1)
-        n11 = musig.Nonce(str11)
-        n2 = musig.Nonce(str2)
-        n22 = musig.Nonce(str22)
-        n3 = musig.Nonce(str3)
-        n33 = musig.Nonce(str33)
-        n4 = musig.Nonce(loads(js0))
-        n44 = musig.Nonce(loads(js00))
+        n1 = musig.Nonce.from_bytes(bts1)
+        n2 = musig.Nonce.from_str(str1)
+        n3 = musig.Nonce(loads(js0))
         assert n1.r is None and n0.R == n1.R
-        assert n11.r is None and n00.R == n11.R
         assert n2.r is None and n0.R == n2.R
-        assert n22.r is None and n00.R == n22.R
         assert n3.r is None and n0.R == n3.R
-        assert n33.r is None and n00.R == n33.R
-        assert n4.r is None and n0.R == n4.R
-        assert n44.r is None and n00.R == n44.R
 
     def test_Nonce_instances_can_be_members_of_sets(self):
         n0 = musig.Nonce()
         n1 = n0.copy()
         n2 = musig.Nonce()
-
-        ns = set([n0, n1, n2])
+        ns = list(set([n0, n1, n2]))
+        assert n0 == n1
+        assert hash(n0) == hash(n1)
         assert len(ns) == 2
 
 

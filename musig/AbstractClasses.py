@@ -1,29 +1,62 @@
 from __future__ import annotations
 from abc import abstractclassmethod, abstractmethod, abstractproperty
+from base64 import b64encode
 from enum import EnumMeta
-from uuid import UUID
+from musig import bytes_are_same
 from nacl.signing import SigningKey, VerifyKey
+from uuid import UUID
 
 
-class AbstractNonce(dict):
-    @abstractmethod
+class ExtendedDict(dict):
+    """ExtendedDict handles some serialization/deserialization."""
     def __setitem__(self, key, value) -> None:
-        ...
+        if hasattr(self, key):
+            setattr(self, f'_{key}', value)
+            if type(value) in (int, str):
+                super().__setitem__(key, value)
+            elif type(value) is bytes:
+                super().__setitem__(key, b64encode(value).decode())
+            elif type(value) in (tuple, list):
+                super().__setitem__(key, tuple([b64encode(bytes(k)).decode() for k in value]))
+            elif type(value) is dict:
+                nv = {}
+                for name in value:
+                    val = value[name]
+                    name = name if type(name) is str else bytes(name)
+                    val = val if type(val) is str else bytes(val)
+                    nv[b64encode(name).decode()] = b64encode(val).decode()
+                super().__setitem__(key, nv)
+            else:
+                super().__setitem__(key, b64encode(bytes(value)).decode())
 
     @abstractmethod
     def __bytes__(self) -> bytes:
         ...
 
-    @abstractmethod
     def __str__(self) -> str:
-        ...
+        return bytes(self).hex()
 
-    @abstractmethod
     def __hash__(self) -> int:
-        ...
+        return hash(bytes(self))
+
+    def __eq__(self, other) -> bool:
+        """Timing-attack safe comparison."""
+        if not isinstance(other, self.__class__):
+            return False
+        return bytes_are_same(bytes(self), bytes(other))
 
     @abstractmethod
-    def __eq__(self) -> bool:
+    def from_bytes(cls, data: bytes) -> ExtendedDict:
+        ...
+
+    @abstractclassmethod
+    def from_str(cls, data: str) -> ExtendedDict:
+        ...
+
+
+class AbstractNonce(ExtendedDict):
+    @abstractmethod
+    def __add__(self, other: AbstractNonce) -> AbstractNonce:
         ...
 
     @abstractmethod
@@ -32,14 +65,6 @@ class AbstractNonce(dict):
 
     @abstractmethod
     def public(self) -> AbstractNonce:
-        ...
-
-    @abstractclassmethod
-    def from_bytes(cls, data: bytes) -> AbstractNonce:
-        ...
-
-    @abstractclassmethod
-    def from_str(cls, data: str) -> AbstractNonce:
         ...
 
     @abstractproperty
@@ -51,27 +76,7 @@ class AbstractNonce(dict):
         ...
 
 
-class AbstractNonceCommitment(dict):
-    @abstractmethod
-    def __setitem__(self, key, value) -> None:
-        ...
-
-    @abstractmethod
-    def __bytes__(self) -> bytes:
-        ...
-
-    @abstractmethod
-    def __str__(self) -> str:
-        ...
-
-    @abstractmethod
-    def __hash__(self) -> int:
-        ...
-
-    @abstractmethod
-    def __eq__(self) -> bool:
-        ...
-
+class AbstractNonceCommitment(ExtendedDict):
     @abstractmethod
     def copy(self) -> AbstractNonceCommitment:
         ...
@@ -93,35 +98,7 @@ class AbstractNonceCommitment(dict):
         ...
 
 
-class AbstractPartialSignature(dict):
-    @abstractmethod
-    def __setitem__(self, key, value) -> None:
-        ...
-
-    @abstractmethod
-    def __bytes__(self) -> bytes:
-        ...
-
-    @abstractmethod
-    def __str__(self) -> str:
-        ...
-
-    @abstractmethod
-    def __hash__(self) -> int:
-        ...
-
-    @abstractmethod
-    def __eq__(self) -> bool:
-        ...
-
-    @abstractclassmethod
-    def from_bytes(cls, data: bytes) -> AbstractPartialSignature:
-        ...
-
-    @abstractclassmethod
-    def from_str(cls, data: str) -> AbstractPartialSignature:
-        ...
-
+class AbstractPartialSignature(ExtendedDict):
     @abstractclassmethod
     def create(cls, skey: SigningKey, r: bytes, L: bytes, X: AbstractPublicKey,
             R: bytes, M: bytes) -> dict:
@@ -144,35 +121,7 @@ class AbstractPartialSignature(dict):
         ...
 
 
-class AbstractPublicKey(dict):
-    @abstractmethod
-    def __setitem__(self, key, value) -> None:
-        ...
-
-    @abstractmethod
-    def __bytes__(self) -> bytes:
-        ...
-
-    @abstractmethod
-    def __str__(self) -> str:
-        ...
-
-    @abstractmethod
-    def __hash__(self) -> int:
-        ...
-
-    @abstractmethod
-    def __eq__(self) -> bool:
-        ...
-
-    @abstractclassmethod
-    def from_bytes(cls, data: bytes) -> AbstractPublicKey:
-        ...
-
-    @abstractclassmethod
-    def from_str(cls, data: str) -> AbstractPublicKey:
-        ...
-
+class AbstractPublicKey(ExtendedDict):
     @abstractmethod
     def verify(self, sig: AbstractSignature) -> bool:
         ...
@@ -202,35 +151,7 @@ class AbstractPublicKey(dict):
         ...
 
 
-class AbstractSignature(dict):
-    @abstractmethod
-    def __setitem__(self, key, value) -> None:
-        ...
-
-    @abstractmethod
-    def __bytes__(self) -> bytes:
-        ...
-
-    @abstractmethod
-    def __str__(self) -> str:
-        ...
-
-    @abstractmethod
-    def __hash__(self) -> int:
-        ...
-
-    @abstractmethod
-    def __eq__(self) -> bool:
-        ...
-
-    @abstractclassmethod
-    def from_bytes(cls, data: bytes) -> AbstractSignature:
-        ...
-
-    @abstractclassmethod
-    def from_str(cls, data: str) -> AbstractSignature:
-        ...
-
+class AbstractSignature(ExtendedDict):
     @abstractclassmethod
     def create(cls, R: bytes, M: bytes, parts: list) -> dict:
         ...
@@ -252,35 +173,7 @@ class AbstractSignature(dict):
         ...
 
 
-class AbstractSingleSigKey(dict):
-    @abstractmethod
-    def __setitem__(self, key, value) -> None:
-        ...
-
-    @abstractmethod
-    def __bytes__(self) -> bytes:
-        ...
-
-    @abstractmethod
-    def __str__(self) -> str:
-        ...
-
-    @abstractmethod
-    def __hash__(self) -> int:
-        ...
-
-    @abstractmethod
-    def __eq__(self) -> bool:
-        ...
-
-    @abstractclassmethod
-    def from_bytes(cls, data: bytes) -> AbstractSingleSigKey:
-        ...
-
-    @abstractclassmethod
-    def from_str(cls, data: str) -> AbstractSingleSigKey:
-        ...
-
+class AbstractSingleSigKey(ExtendedDict):
     @abstractmethod
     def sign_message(self, M: bytes) -> AbstractSignature:
         ...
@@ -302,35 +195,7 @@ class AbstractProtocolState(EnumMeta):
     ...
 
 
-class AbstractProtocolMessage(dict):
-    @abstractmethod
-    def __setitem__(self, key, value) -> None:
-        ...
-
-    @abstractmethod
-    def __bytes__(self) -> bytes:
-        ...
-
-    @abstractmethod
-    def __str__(self) -> str:
-        ...
-
-    @abstractmethod
-    def __hash__(self) -> int:
-        ...
-
-    @abstractmethod
-    def __eq__(self) -> bool:
-        ...
-
-    @abstractclassmethod
-    def from_bytes(cls, data: bytes) -> AbstractProtocolMessage:
-        ...
-
-    @abstractclassmethod
-    def from_str(cls, data: str) -> AbstractProtocolMessage:
-        ...
-
+class AbstractProtocolMessage(ExtendedDict):
     @abstractmethod
     def parse_message(self) -> None:
         ...
