@@ -85,14 +85,6 @@ class AbstractNonceCommitment(ExtendedDict):
     def is_valid_for(self, nonce: AbstractNonce) -> bool:
         ...
 
-    @abstractmethod
-    def serialize(self) -> str:
-        ...
-
-    @abstractclassmethod
-    def deserialize(cls, data) -> AbstractNonceCommitment:
-        ...
-
     @abstractproperty
     def HR(self):
         ...

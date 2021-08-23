@@ -10,7 +10,7 @@ rest of the SDK.
 # Status
 
 - [x] Migrate over all classes and functions.
-- [ ] Define abstract classes for type checking.
+- [x] Define abstract classes for type checking.
 - [ ] Refactor all classes to be maximally SOLID.
 - [ ] Standardize and clean up serialization/deserialization.
 - [ ] General code cleanup.
