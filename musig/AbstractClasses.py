@@ -1,5 +1,5 @@
 from __future__ import annotations
-from abc import ABC, abstractclassmethod, abstractmethod, abstractproperty
+from abc import abstractclassmethod, abstractmethod, abstractproperty
 from enum import EnumMeta
 from uuid import UUID
 from nacl.signing import SigningKey, VerifyKey
