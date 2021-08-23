@@ -5,7 +5,23 @@ from uuid import UUID
 from nacl.signing import SigningKey, VerifyKey
 
 
-class AbstractNonce(ABC):
+class AbstractNonce(dict):
+    @abstractmethod
+    def __setitem__(self, key, value) -> None:
+        ...
+
+    @abstractmethod
+    def __bytes__(self) -> bytes:
+        ...
+
+    @abstractmethod
+    def __hash__(self) -> bytes:
+        ...
+
+    @abstractmethod
+    def __eq__(self) -> bytes:
+        ...
+
     @abstractmethod
     def copy(self) -> AbstractNonce:
         ...
@@ -18,6 +34,10 @@ class AbstractNonce(ABC):
     def serialize(self) -> str:
         ...
 
+    @abstractclassmethod
+    def deserialize(cls, data) -> AbstractNonce:
+        ...
+
     @abstractproperty
     def r(self):
         ...
@@ -27,7 +47,23 @@ class AbstractNonce(ABC):
         ...
 
 
-class AbstractNonceCommitment(ABC):
+class AbstractNonceCommitment(dict):
+    @abstractmethod
+    def __setitem__(self, key, value) -> None:
+        ...
+
+    @abstractmethod
+    def __bytes__(self) -> bytes:
+        ...
+
+    @abstractmethod
+    def __hash__(self) -> bytes:
+        ...
+
+    @abstractmethod
+    def __eq__(self) -> bytes:
+        ...
+
     @abstractmethod
     def copy(self) -> AbstractNonceCommitment:
         ...
@@ -40,12 +76,32 @@ class AbstractNonceCommitment(ABC):
     def serialize(self) -> str:
         ...
 
+    @abstractclassmethod
+    def deserialize(cls, data) -> AbstractNonceCommitment:
+        ...
+
     @abstractproperty
     def HR(self):
         ...
 
 
-class AbstractPartialSignature(ABC):
+class AbstractPartialSignature(dict):
+    @abstractmethod
+    def __setitem__(self, key, value) -> None:
+        ...
+
+    @abstractmethod
+    def __bytes__(self) -> bytes:
+        ...
+
+    @abstractmethod
+    def __hash__(self) -> bytes:
+        ...
+
+    @abstractmethod
+    def __eq__(self) -> bytes:
+        ...
+
     @abstractmethod
     def serialize(self) -> str:
         ...
@@ -76,7 +132,23 @@ class AbstractPartialSignature(ABC):
         ...
 
 
-class AbstractPublicKey(ABC):
+class AbstractPublicKey(dict):
+    @abstractmethod
+    def __setitem__(self, key, value) -> None:
+        ...
+
+    @abstractmethod
+    def __bytes__(self) -> bytes:
+        ...
+
+    @abstractmethod
+    def __hash__(self) -> bytes:
+        ...
+
+    @abstractmethod
+    def __eq__(self) -> bytes:
+        ...
+
     @abstractmethod
     def serialize(self) -> str:
         ...
@@ -114,13 +186,33 @@ class AbstractPublicKey(ABC):
         ...
 
 
-class AbstractSignature(ABC):
+class AbstractSignature(dict):
     @abstractmethod
-    def serialize(self) -> str:
+    def __setitem__(self, key, value) -> None:
+        ...
+
+    @abstractmethod
+    def __bytes__(self) -> bytes:
+        ...
+
+    @abstractmethod
+    def __str__(self) -> str:
+        ...
+
+    @abstractmethod
+    def __hash__(self) -> bytes:
+        ...
+
+    @abstractmethod
+    def __eq__(self) -> bytes:
         ...
 
     @abstractclassmethod
-    def deserialize(cls, data) -> AbstractSignature:
+    def from_bytes(cls, data: bytes) -> AbstractSignature:
+        ...
+
+    @abstractclassmethod
+    def from_str(cls, data: str) -> AbstractSignature:
         ...
 
     @abstractclassmethod
@@ -144,39 +236,83 @@ class AbstractSignature(ABC):
         ...
 
 
-class AbstractSingleSigKey(ABC):
+class AbstractSingleSigKey(dict):
     @abstractmethod
-    def serialize(self) -> str:
+    def __setitem__(self, key, value) -> None:
+        ...
+
+    @abstractmethod
+    def __bytes__(self) -> bytes:
+        ...
+
+    @abstractmethod
+    def __str__(self) -> str:
+        ...
+
+    @abstractmethod
+    def __hash__(self) -> bytes:
+        ...
+
+    @abstractmethod
+    def __eq__(self) -> bytes:
         ...
 
     @abstractclassmethod
-    def deserialize(cls, data) -> AbstractSingleSigKey:
+    def from_bytes(cls, data: bytes) -> AbstractSingleSigKey:
+        ...
+
+    @abstractclassmethod
+    def from_str(cls, data: str) -> AbstractSingleSigKey:
         ...
 
     @abstractmethod
     def sign_message(self, M: bytes) -> AbstractSignature:
         ...
 
+    @abstractproperty
+    def skey(self):
+        ...
 
-class AbstractProtocolState(EnumMeta):
+    @abstractproperty
+    def vkey(self):
+        ...
+
+    @abstractproperty
+    def vkey_base(self):
         ...
 
 
-class AbstractProtocolMessage(ABC):
+class AbstractProtocolState(EnumMeta):
+    ...
+
+
+class AbstractProtocolMessage(dict):
+    @abstractmethod
+    def __setitem__(self, key, value) -> None:
+        ...
+
     @abstractmethod
     def __bytes__(self) -> bytes:
         ...
 
     @abstractmethod
-    def __eq__(self, other) -> bool:
+    def __str__(self) -> str:
+        ...
+
+    @abstractmethod
+    def __hash__(self) -> bytes:
+        ...
+
+    @abstractmethod
+    def __eq__(self) -> bytes:
         ...
 
     @abstractclassmethod
     def from_bytes(cls, data: bytes) -> AbstractProtocolMessage:
         ...
 
-    @abstractmethod
-    def __str__(self) -> str:
+    @abstractclassmethod
+    def from_str(cls, data: str) -> AbstractProtocolMessage:
         ...
 
     @abstractmethod
@@ -192,9 +328,25 @@ class AbstractProtocolMessage(ABC):
         ...
 
     @abstractclassmethod
-    def from_str(cls, data: str) -> AbstractProtocolMessage:
+    def create(cls, id: UUID, state: AbstractProtocolState, data: list) -> AbstractProtocolMessage:
         ...
 
-    @abstractclassmethod
-    def create(cls, id: UUID, state: AbstractProtocolState, data: list) -> AbstractProtocolMessage:
+    @abstractproperty
+    def session_id(self):
+        ...
+
+    @abstractproperty
+    def state(self):
+        ...
+
+    @abstractproperty
+    def message(self):
+        ...
+
+    @abstractproperty
+    def signature(self):
+        ...
+
+    @abstractproperty
+    def vkey(self):
         ...
