@@ -1,12 +1,10 @@
 from context import musig
-from enum import Enum
 from json import dumps, loads
-from nacl.signing import SigningKey, VerifyKey, SignedMessage as NaclSignedMessage
+from nacl.signing import SigningKey
 from time import time, sleep
 from uuid import UUID, uuid4
 import inspect
 import musig
-import nacl.bindings
 import unittest
 
 
