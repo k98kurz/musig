@@ -15,11 +15,15 @@ class AbstractNonce(dict):
         ...
 
     @abstractmethod
-    def __hash__(self) -> bytes:
+    def __str__(self) -> str:
         ...
 
     @abstractmethod
-    def __eq__(self) -> bytes:
+    def __hash__(self) -> int:
+        ...
+
+    @abstractmethod
+    def __eq__(self) -> bool:
         ...
 
     @abstractmethod
@@ -30,12 +34,12 @@ class AbstractNonce(dict):
     def public(self) -> AbstractNonce:
         ...
 
-    @abstractmethod
-    def serialize(self) -> str:
+    @abstractclassmethod
+    def from_bytes(cls, data: bytes) -> AbstractNonce:
         ...
 
     @abstractclassmethod
-    def deserialize(cls, data) -> AbstractNonce:
+    def from_str(cls, data: str) -> AbstractNonce:
         ...
 
     @abstractproperty
@@ -57,11 +61,15 @@ class AbstractNonceCommitment(dict):
         ...
 
     @abstractmethod
-    def __hash__(self) -> bytes:
+    def __str__(self) -> str:
         ...
 
     @abstractmethod
-    def __eq__(self) -> bytes:
+    def __hash__(self) -> int:
+        ...
+
+    @abstractmethod
+    def __eq__(self) -> bool:
         ...
 
     @abstractmethod
@@ -95,19 +103,23 @@ class AbstractPartialSignature(dict):
         ...
 
     @abstractmethod
-    def __hash__(self) -> bytes:
+    def __str__(self) -> str:
         ...
 
     @abstractmethod
-    def __eq__(self) -> bytes:
+    def __hash__(self) -> int:
         ...
 
     @abstractmethod
-    def serialize(self) -> str:
+    def __eq__(self) -> bool:
         ...
 
     @abstractclassmethod
-    def deserialize(cls, data) -> AbstractPartialSignature:
+    def from_bytes(cls, data: bytes) -> AbstractPartialSignature:
+        ...
+
+    @abstractclassmethod
+    def from_str(cls, data: str) -> AbstractPartialSignature:
         ...
 
     @abstractclassmethod
@@ -142,19 +154,23 @@ class AbstractPublicKey(dict):
         ...
 
     @abstractmethod
-    def __hash__(self) -> bytes:
+    def __str__(self) -> str:
         ...
 
     @abstractmethod
-    def __eq__(self) -> bytes:
+    def __hash__(self) -> int:
         ...
 
     @abstractmethod
-    def serialize(self) -> str:
+    def __eq__(self) -> bool:
         ...
 
     @abstractclassmethod
-    def deserialize(cls, data) -> AbstractPublicKey:
+    def from_bytes(cls, data: bytes) -> AbstractPublicKey:
+        ...
+
+    @abstractclassmethod
+    def from_str(cls, data: str) -> AbstractPublicKey:
         ...
 
     @abstractmethod
@@ -200,11 +216,11 @@ class AbstractSignature(dict):
         ...
 
     @abstractmethod
-    def __hash__(self) -> bytes:
+    def __hash__(self) -> int:
         ...
 
     @abstractmethod
-    def __eq__(self) -> bytes:
+    def __eq__(self) -> bool:
         ...
 
     @abstractclassmethod
@@ -250,11 +266,11 @@ class AbstractSingleSigKey(dict):
         ...
 
     @abstractmethod
-    def __hash__(self) -> bytes:
+    def __hash__(self) -> int:
         ...
 
     @abstractmethod
-    def __eq__(self) -> bytes:
+    def __eq__(self) -> bool:
         ...
 
     @abstractclassmethod
@@ -300,11 +316,11 @@ class AbstractProtocolMessage(dict):
         ...
 
     @abstractmethod
-    def __hash__(self) -> bytes:
+    def __hash__(self) -> int:
         ...
 
     @abstractmethod
-    def __eq__(self) -> bytes:
+    def __eq__(self) -> bool:
         ...
 
     @abstractclassmethod
