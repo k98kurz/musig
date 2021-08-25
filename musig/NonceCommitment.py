@@ -5,45 +5,22 @@ from musig.abstractclasses import AbstractNonce, AbstractNonceCommitment
 from musig.helpers import bytes_are_same, H_small
 
 
-class NonceCommitment(dict, AbstractNonceCommitment):
+class NonceCommitment(AbstractNonceCommitment):
     """A class that handles generating, serializing, and deserializing nonce
         commitments.
     """
 
-    def __init__(self, data=None) -> None:
-        """Initialize with a Nonce or deserialize.
-            Call with `data=Nonce` to make a new NonceCommitment.
-            Call with `data=bytes` to restore a NonceCommitment.
-            Anything else will be sent to `deserialize`.
-        """
+    def __init__(self, data: dict = None) -> None:
+        """Initialize with a dict."""
         if data is None:
             raise ValueError('cannot instantiate an empty NonceCommitment')
-        elif isinstance(data, AbstractNonce):
-            self._HR = H_small(data.R)
-        elif isinstance(data, bytes):
-            self._HR = data
-        else:
-            # attempt to deserialize
-            data = self.deserialize(data)
-            for field in data:
-                val = data[field] if type(data[field]) is bytes else b64decode(data[field])
-                setattr(self, f'_{field}', val)
-                self[field] = b64encode(val).decode()
 
-        if self.HR is not None:
-            self['HR'] = b64encode(self._HR).decode()
+        if type(data) is not dict:
+            raise TypeError('data must be type dict')
 
-    def __repr__(self) -> str:
-        """Result of calling repr() on an instance."""
-        if self.HR is not None:
-            return '64.' + b64encode(self.HR).decode()
-        return ''
-
-    def __str__(self) -> str:
-        """Result of calling str() on an instance."""
-        if self.HR is not None:
-            return '16.' + self.HR.hex()
-        return ''
+        if 'HR' in data:
+            HR = data['HR']
+            self.HR = HR if type(HR) is bytes else b64decode(HR)
 
     def __bytes__(self) -> bytes:
         """Result of calling bytes() on an instance."""
@@ -51,15 +28,14 @@ class NonceCommitment(dict, AbstractNonceCommitment):
             return self.HR
         return b''
 
-    def __hash__(self) -> int:
-        """Make class hashable for inclusion in sets."""
-        return hash(self._HR)
-
-    def __eq__(self, other) -> bool:
-        """Enforce timing-attack safe comparison."""
-        if not isinstance(other, self.__class__):
-            return False
-        return bytes_are_same(bytes(self), bytes(other))
+    @classmethod
+    def create(cls, nonce: AbstractNonce) -> NonceCommitment:
+        if not isinstance(nonce, AbstractNonce):
+            raise TypeError('nonce must be instance of AbstractNonce')
+        HR = H_small(nonce.R)
+        return cls({
+            'HR': b64encode(HR).decode()
+        })
 
     def copy(self) -> NonceCommitment:
         """Make a copy without serializing and deserializing."""
@@ -74,9 +50,20 @@ class NonceCommitment(dict, AbstractNonceCommitment):
 
         return bytes_are_same(H_small(nonce.R), self.HR)
 
-    def serialize(self) -> str:
-        """Return a serialized representation of the instance."""
-        return repr(self)
+    @classmethod
+    def from_bytes(cls, data: bytes) -> NonceCommitment:
+        if type(data) is not bytes:
+            raise TypeError('data must be bytes of len 32')
+        if len(data) != 32:
+            raise ValueError('data must be bytes of len 32')
+
+        return cls({
+            'HR': b64encode(data).decode()
+        })
+
+    @classmethod
+    def from_str(cls, data: str) -> NonceCommitment:
+        return cls.from_bytes(bytes.fromhex(data))
 
     @classmethod
     def deserialize(cls, data):
@@ -108,5 +95,15 @@ class NonceCommitment(dict, AbstractNonceCommitment):
         else:
             raise ValueError('unknown serialization/input')
 
-    # readonly property
-    HR = property(lambda self: self._HR if hasattr(self, '_HR') else None)
+    @property
+    def HR(self):
+        return self._HR if hasattr(self, '_HR') else None
+
+    @HR.setter
+    def HR(self, value: bytes):
+        if type(value) is not bytes:
+            raise TypeError('HR must be bytes')
+        if len(value) != 32:
+            raise ValueError('HR value must have length 32')
+
+        self['HR'] = value

@@ -77,6 +77,10 @@ class AbstractNonce(ExtendedDict):
 
 
 class AbstractNonceCommitment(ExtendedDict):
+    @abstractclassmethod
+    def create(cls, nonce: AbstractNonce) -> AbstractNonceCommitment:
+        ...
+
     @abstractmethod
     def copy(self) -> AbstractNonceCommitment:
         ...
@@ -114,6 +118,10 @@ class AbstractPartialSignature(ExtendedDict):
 
 
 class AbstractPublicKey(ExtendedDict):
+    @abstractclassmethod
+    def create(cls, keys: list) -> AbstractPublicKey:
+        ...
+
     @abstractmethod
     def verify(self, sig: AbstractSignature) -> bool:
         ...
