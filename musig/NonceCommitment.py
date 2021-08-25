@@ -65,36 +65,6 @@ class NonceCommitment(AbstractNonceCommitment):
     def from_str(cls, data: str) -> NonceCommitment:
         return cls.from_bytes(bytes.fromhex(data))
 
-    @classmethod
-    def deserialize(cls, data):
-        """Deserialize some `data` into an instance.
-            Acceptable types are `dict` and `str`.
-            Acceptable format for `dict` is {'r': bytes, 'R': bytes}.
-            Acceptable formats for `str` are '16.{hexadecimal}',
-            '64.{base64}', and 'json.{json_string}'.
-        """
-        if isinstance(data, dict):
-            if 'HR' in data:
-                HR = data['HR'] if type(data['HR']) is bytes else b64decode(data['HR'])
-        elif type(data) is str:
-            # split the data and parse appropriately
-            parts = data.split('.')
-            if len(parts) < 2:
-                raise ValueError('input str must have at least 2 parts delimited by .')
-            if parts[0] == '64':
-                HR = b64decode(parts[1])
-            elif parts[0] == '16':
-                HR = bytes.fromhex(parts[1])
-            elif parts[0] == 'json':
-                data = loads('.'.join(parts[1:]))
-                if 'HR' in data:
-                    HR = b64decode(data['HR'])
-
-        if 'HR' in dir():
-            return NonceCommitment(HR)
-        else:
-            raise ValueError('unknown serialization/input')
-
     @property
     def HR(self):
         return self._HR if hasattr(self, '_HR') else None
