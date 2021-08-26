@@ -133,7 +133,7 @@ class AbstractPublicKey(ExtendedDict):
         ...
 
     @abstractclassmethod
-    def aggregate_public_key(cls, vkeys: list, key_set_L=None) -> bytes:
+    def aggregate_public_keys(cls, vkeys: list, key_set_L=None) -> bytes:
         ...
 
     @abstractclassmethod
