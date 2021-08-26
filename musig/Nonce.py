@@ -59,10 +59,6 @@ class Nonce(AbstractNonce):
                 'R': b64encode(data).decode()
             })
 
-    @classmethod
-    def from_str(cls, data: str) -> Nonce:
-        return cls.from_bytes(bytes.fromhex(data))
-
     def __add__(self, other: Nonce) -> Nonce:
         """Result of the + operation between two Nonces."""
         R_sum = aggregate_points([self.R, other.R])
