@@ -1,5 +1,5 @@
 from __future__ import annotations
-from abc import abstractclassmethod, abstractmethod, abstractproperty
+from abc import ABCMeta, abstractclassmethod, abstractmethod, abstractproperty
 from base64 import b64encode
 from enum import EnumMeta
 from musig import bytes_are_same
@@ -22,9 +22,11 @@ class ExtendedDict(dict):
                 nv = {}
                 for name in value:
                     val = value[name]
-                    name = name if type(name) is str else bytes(name)
-                    val = val if type(val) is str else bytes(val)
-                    nv[b64encode(name).decode()] = b64encode(val).decode()
+                    if type(name) not in (str, int):
+                        name = b64encode(name if type(name) is bytes else bytes(name)).decode()
+                    if type(val) not in (str, int):
+                        val = b64encode(val if type(val) is bytes else bytes(val)).decode()
+                    nv[name] = val
                 super().__setitem__(key, nv)
             else:
                 super().__setitem__(key, b64encode(bytes(value)).decode())
@@ -45,13 +47,13 @@ class ExtendedDict(dict):
             return False
         return bytes_are_same(bytes(self), bytes(other))
 
-    @abstractmethod
+    @abstractclassmethod
     def from_bytes(cls, data: bytes) -> ExtendedDict:
         ...
 
-    @abstractclassmethod
+    @classmethod
     def from_str(cls, data: str) -> ExtendedDict:
-        ...
+        return cls.from_bytes(bytes.fromhex(data))
 
 
 class AbstractNonce(ExtendedDict):
@@ -120,6 +122,10 @@ class AbstractPartialSignature(ExtendedDict):
 class AbstractPublicKey(ExtendedDict):
     @abstractclassmethod
     def create(cls, keys: list) -> AbstractPublicKey:
+        ...
+
+    @abstractmethod
+    def public(self) -> AbstractPublicKey:
         ...
 
     @abstractmethod
