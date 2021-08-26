@@ -50,14 +50,18 @@ class TestMuSigNonceCommitment(unittest.TestCase):
         bts = bytes(nc0)
         str0 = str(nc0)
         js = dumps(nc0)
-        nc1 = musig.NonceCommitment.from_str(str0)
-        nc2 = musig.NonceCommitment(loads(js))
-        nc3 = musig.NonceCommitment.from_bytes(bts)
+        nc1 = musig.NonceCommitment.from_bytes(bts)
+        nc2 = musig.NonceCommitment.from_str(str0)
+        nc3 = musig.NonceCommitment(loads(js))
 
+        assert type(bts) is bytes
+        assert type(str0) is str
         assert type(js) is str
 
         assert nc0 == nc1
+        assert nc1 == nc2
         assert nc2 == nc3
+        assert len(nc3.HR) == 32
 
     def test_NonceCommitment_instances_can_be_members_of_sets(self):
         nc0 = musig.NonceCommitment.create(musig.Nonce())

@@ -34,7 +34,7 @@ class NonceCommitment(AbstractNonceCommitment):
             raise TypeError('nonce must be instance of AbstractNonce')
         HR = H_small(nonce.R)
         return cls({
-            'HR': b64encode(HR).decode()
+            'HR': HR
         })
 
     def copy(self) -> NonceCommitment:
