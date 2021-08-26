@@ -61,10 +61,6 @@ class NonceCommitment(AbstractNonceCommitment):
             'HR': b64encode(data).decode()
         })
 
-    @classmethod
-    def from_str(cls, data: str) -> NonceCommitment:
-        return cls.from_bytes(bytes.fromhex(data))
-
     @property
     def HR(self):
         return self._HR if hasattr(self, '_HR') else None
