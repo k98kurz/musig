@@ -172,6 +172,14 @@ class TestMuSigAbstractClasses(unittest.TestCase):
         assert t2 == t0
         assert t22 == t00
 
+    def test_class_deriving_from_ExtendedDict_is_hashable(self):
+        t1 = ExtendedDictExample({'stuff':'things'})
+        t2 = ExtendedDictExample({'stuff':'not things'})
+        t3 = ExtendedDictExample({**t1})
+
+        ts = set([t1, t2, t3])
+        assert len(list(ts)) == 2
+
     def test_class_deriving_from_AbstractNonce_cannot_set_nonproperty_keys(self):
         n = AbstractNonceExample()
         assert 'r' in n and n.r is not None
