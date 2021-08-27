@@ -235,6 +235,10 @@ class AbstractProtocolMessage(ExtendedDict):
         ...
 
     @abstractproperty
+    def message_parts(self):
+        ...
+
+    @abstractproperty
     def signature(self):
         ...
 
