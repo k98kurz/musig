@@ -71,7 +71,8 @@ class TestMuSigSomething(unittest.TestCase):
     def test_SingleSigKey_signatures_are_verified_by_relevant_PublicKey(self):
         ssk = musig.SingleSigKey({'skey': self.signing_keys[0]})
         sig = ssk.sign_message(b'hello world')
-        assert ssk.vkey.verify(sig)
+        pubkey = ssk.vkey.public()
+        assert pubkey.verify(sig)
 
 
 if __name__ == '__main__':
