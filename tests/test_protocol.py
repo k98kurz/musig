@@ -467,7 +467,7 @@ class TestMuSigProtocol(unittest.TestCase):
         nonce = musig.Nonce()
         pkey = musig.PublicKey.create(self.verify_keys)
         skey = self.signing_keys[1]
-        sig = musig.PartialSignature.create(skey, nonce.r, pkey.L, skey.verify_key, nonce.R, b'hello world')
+        sig = musig.PartialSignature.create(skey, nonce.r, pkey.L, pkey, nonce.R, b'hello world')
         pm = musig.ProtocolMessage.create(self.uuid, musig.ProtocolState.ACK_PARTIAL_SIGNATURE, [sig])
         assert isinstance(pm, musig.ProtocolMessage)
         assert hasattr(pm, 'state') and pm.state is musig.ProtocolState.ACK_PARTIAL_SIGNATURE
@@ -481,7 +481,7 @@ class TestMuSigProtocol(unittest.TestCase):
         nonce = musig.Nonce()
         pkey = musig.PublicKey.create(self.verify_keys)
         skey = self.signing_keys[1]
-        sig = musig.PartialSignature.create(skey, nonce.r, pkey.L, skey.verify_key, nonce.R, b'hello world')
+        sig = musig.PartialSignature.create(skey, nonce.r, pkey.L, pkey, nonce.R, b'hello world')
         pm = musig.ProtocolMessage.create(self.uuid, musig.ProtocolState.REJECT_PARTIAL_SIGNATURE, [sig])
         assert isinstance(pm, musig.ProtocolMessage)
         assert hasattr(pm, 'state') and pm.state is musig.ProtocolState.REJECT_PARTIAL_SIGNATURE
@@ -525,7 +525,7 @@ class TestMuSigProtocol(unittest.TestCase):
         nonce = musig.Nonce()
         pkey = musig.PublicKey.create(self.verify_keys)
         skey = self.signing_keys[0]
-        sig = musig.PartialSignature.create(skey, nonce.r, pkey.L, skey.verify_key, nonce.R, b'hello world')
+        sig = musig.PartialSignature.create(skey, nonce.r, pkey.L, pkey, nonce.R, b'hello world')
         pm = musig.ProtocolMessage.create(self.uuid, musig.ProtocolState.SENDING_PARTIAL_SIGNATURE, [sig])
         assert isinstance(pm, musig.ProtocolMessage)
         assert hasattr(pm, 'state') and pm.state is musig.ProtocolState.SENDING_PARTIAL_SIGNATURE
