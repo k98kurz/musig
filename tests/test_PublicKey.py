@@ -104,6 +104,8 @@ class TestMuSigPublicKey(unittest.TestCase):
         assert len(pubkey.vkeys) == 0
         assert type(pubkey.gvkey) is bytes
         assert pubkey.gvkey == aggkey.gvkey
+        assert len(pubkey.vkeys) == 0
+        assert pubkey.L is None
 
     def test_PublicKey_instance_serialize_and_deserialize_properly(self):
         aggkey0 = musig.PublicKey.create(self.verify_keys)
