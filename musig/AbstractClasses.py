@@ -1,5 +1,5 @@
 from __future__ import annotations
-from abc import ABCMeta, abstractclassmethod, abstractmethod, abstractproperty
+from abc import abstractclassmethod, abstractmethod, abstractproperty
 from base64 import b64encode
 from enum import EnumMeta
 from musig import bytes_are_same
@@ -244,4 +244,82 @@ class AbstractProtocolMessage(ExtendedDict):
 
     @abstractproperty
     def vkey(self):
+        ...
+
+
+class AbstractSigningSession(ExtendedDict):
+    @abstractmethod
+    def add_participant_keys(self, keys) -> None:
+        ...
+
+    @abstractmethod
+    def add_nonce_commitment(self, commitment: AbstractNonceCommitment, vkey: VerifyKey) -> None:
+        ...
+
+    @abstractmethod
+    def add_nonce(self, nonce: AbstractNonce, vkey: VerifyKey) -> None:
+        ...
+
+    @abstractmethod
+    def make_partial_signature(self) -> AbstractPartialSignature:
+        ...
+
+    @abstractmethod
+    def add_partial_signature(self, sig: AbstractPartialSignature, vkey: VerifyKey) -> None:
+        ...
+
+    @abstractmethod
+    def update_protocol_state(self) -> None:
+        ...
+
+    @abstractproperty
+    def id(self):
+        ...
+
+    @abstractproperty
+    def number_of_participants(self):
+        ...
+
+    @abstractproperty
+    def protocol_state(self):
+        ...
+
+    @abstractproperty
+    def last_updated(self):
+        ...
+
+    @abstractproperty
+    def skey(self):
+        ...
+
+    @abstractproperty
+    def vkeys(self):
+        ...
+
+    @abstractproperty
+    def nonce_commitments(self):
+        ...
+
+    @abstractproperty
+    def nonce_points(self):
+        ...
+
+    @abstractproperty
+    def aggregate_nonce(self):
+        ...
+
+    @abstractproperty
+    def message(self):
+        ...
+
+    @abstractproperty
+    def partial_signatures(self):
+        ...
+
+    @abstractproperty
+    def public_key(self):
+        ...
+
+    @abstractproperty
+    def signature(self):
         ...

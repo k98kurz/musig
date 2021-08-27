@@ -1,4 +1,7 @@
-from base64 import b64encode, b64decode
+from __future__ import annotations
+from base64 import b64decode
+from json import dumps, loads
+from musig.abstractclasses import AbstractSigningSession
 from musig.constants import (
     MAX_WAIT_TIME_FOR_COMMITMENTS,
     MAX_WAIT_TIME_FOR_PARTIAL_SIGS,
@@ -16,7 +19,7 @@ from time import time
 from uuid import UUID, uuid4
 
 
-class SigningSession(dict):
+class SigningSession(AbstractSigningSession):
     """A class that handles multi-party signing sessions.
         This is designed to maintain security with a 3-round protocol.
         Though the keys are reusable, each Session can be used for only a single
@@ -26,47 +29,96 @@ class SigningSession(dict):
         in the musig.readme.md file (eventually).
     """
 
-    def __init__(self, data=None) -> None:
+    def __init__(self, data: dict = None) -> None:
         """Init method. Initialize with None to create an EMPTY SigningSession.
-            Initialize with a SigningKey to create an INITIALIZED SigningSession.
+            Initialize with {'skey': SigningKey} to create an INITIALIZED SigningSession.
+            Initialize with a dict (output from json serialization/deserialization)
+            to restore a previously used or customly configured SigningSession.
         """
         self.last_updated = time() * 1000
 
         if data is None:
-            self._protocol_state = ProtocolState.EMPTY
+            self.protocol_state = ProtocolState.EMPTY
+            return
 
-        if isinstance(data, SigningKey):
-            self.skey = data
-            self.id = uuid4()
-            self.vkeys = (data.verify_key,)
-            self.protocol_state = ProtocolState.INITIALIZED
+        if data is not None and type(data) is not dict:
+            raise TypeError('data for initialization must be of type dict')
 
-        if isinstance(data, dict):
-            super().__init__(data)
-            self.deserialize()
+        if 'skey' in data:
+            if type(data['skey']) is SigningKey:
+                self.skey = data['skey']
+            else:
+                seed = data['skey'] if type(data['skey']) is bytes else b64decode(data['skey'])
+                self.skey = SigningKey(seed)
+            if len(data.keys()) == 1:
+                self.id = uuid4()
+                self.vkeys = (self.skey.verify_key,)
+                self.protocol_state = ProtocolState.INITIALIZED
+
+        if 'id' in data:
+            sid = data['id'] if type(data['id']) is bytes else b64decode(data['id'])
+            self.id = UUID(bytes=sid)
+
+        if 'protocol_state' in data:
+            if type(data['protocol_state']) is ProtocolState:
+                self.protocol_state = data['protocol_state']
+            else:
+                self.protocol_state = ProtocolState[data['protocol_state']]
+
+        if 'number_of_participants' in data:
+            self.number_of_participants = data['number_of_participants']
+
+        if 'last_updated' in data:
+            self.last_updated = data['last_updated']
+
+        if 'vkeys' in data:
+            vkeys = [vk if type(vk) in (bytes, VerifyKey) else b64decode(vk) for vk in data['vkeys']]
+            self.vkeys = tuple([vk if type(vk) is VerifyKey else VerifyKey(vk) for vk in vkeys])
+
+        if 'nonce_commitments' in data:
+            commitments = {}
+            for name in data['nonce_commitments']:
+                n = VerifyKey(name if type(name) is bytes else b64decode(name))
+                c = data['nonce_commitments'][name]
+                c = c if type(c) is bytes else b64decode(c)
+                commitments[n] = NonceCommitment.from_bytes(c)
+            self.nonce_commitments = commitments
+
+        if 'nonce_points' in data:
+            nonce_points = {}
+            for name in data['nonce_points']:
+                n = VerifyKey(name if type(name) is bytes else b64decode(name))
+                c = data['nonce_points'][name]
+                c = c if type(c) is bytes else b64decode(c)
+                nonce_points[n] = Nonce.from_bytes(c)
+            self.nonce_points = nonce_points
+
+        if 'aggregate_nonce' in data:
+            n = data['aggregate_nonce']
+            self.aggregate_nonce = Nonce.from_bytes(n if type(n) is bytes else b64decode(n))
+
+        if 'message' in data:
+            m = data['message']
+            self.message = m if type(m) is bytes else b64decode(m)
+
+        if 'partial_signatures' in data:
+            parts = {}
+            for name in data['partial_signatures']:
+                n = VerifyKey(name if type(name) is bytes else b64decode(name))
+                ps = data['partial_signatures'][name]
+                parts[n] = PartialSignature.from_bytes(ps if type(ps) is bytes else b64decode(ps))
+            self.partial_signatures = parts
+
+        if 'public_key' in data:
+            pk = data['public_key']
+            self.public_key = PublicKey.from_bytes(pk if type(pk) is bytes else b64decode(pk))
+
+        if 'signature' in data:
+            s = data['signature']
+            self.signature = Signature.from_bytes(s if type(s) is bytes else b64decode(s))
 
     def __setitem__(self, key, value) -> None:
-        if hasattr(self, key):
-            setattr(self, f'_{key}', value)
-            if type(value) in (int, str):
-                super().__setitem__(key, value)
-            elif type(value) is bytes:
-                super().__setitem__(key, b64encode(value).decode())
-            elif type(value) in (tuple, list):
-                super().__setitem__(key, tuple([b64encode(bytes(k)).decode() for k in value]))
-            elif type(value) is dict:
-                nv = {}
-                for name in value:
-                    val = value[name]
-                    name = name if type(name) is str else bytes(name)
-                    val = val if type(val) is str else bytes(val)
-                    nv[b64encode(name).decode()] = b64encode(val).decode()
-                super().__setitem__(key, nv)
-            else:
-                super().__setitem__(key, b64encode(bytes(value)).decode())
-
-        if key == 'id':
-            self._id = UUID(bytes=value) if type(value) is bytes else value
+        super().__setitem__(key, value)
 
         if key == 'protocol_state':
             self._protocol_state = value if type(value) is ProtocolState else ProtocolState[value]
@@ -75,6 +127,15 @@ class SigningSession(dict):
             self._last_updated = value
         else:
             self.update_protocol_state()
+
+    def __bytes__(self) -> bytes:
+        return bytes(dumps(self), 'utf-8')
+
+    @classmethod
+    def from_bytes(cls, data: bytes) -> SigningSession:
+        if type(data) is not bytes:
+            raise TypeError('data must be bytes')
+        return SigningSession(loads(str(data, 'utf-8')))
 
     def add_participant_keys(self, keys) -> None:
         """Add participant VerifyKey(s)."""
@@ -94,7 +155,7 @@ class SigningSession(dict):
         self.vkeys = tuple(vkeys)
 
         if len(self.vkeys) == self.number_of_participants:
-            self.public_key = PublicKey(list(self.vkeys))
+            self.public_key = PublicKey.create(list(self.vkeys))
 
     def add_nonce_commitment(self, commitment: NonceCommitment, vkey: VerifyKey) -> None:
         """Add a NonceCommitment from a participant identified by the VerifyKey."""
@@ -205,7 +266,7 @@ class SigningSession(dict):
             elif self.number_of_participants is not None:
                 if len(self.nonce_points.keys()) == self.number_of_participants:
                     points = [self.nonce_points[vk].R for vk in self.nonce_points]
-                    self.aggregate_nonce = Nonce(aggregate_points(points))
+                    self.aggregate_nonce = Nonce.from_bytes(aggregate_points(points))
 
         if self.protocol_state is ProtocolState.AWAITING_PARTIAL_SIGNATURE:
             if elapsed_time > MAX_WAIT_TIME_FOR_PARTIAL_SIGS:
@@ -218,47 +279,6 @@ class SigningSession(dict):
                     parts = [self.partial_signatures[vk] for vk in self.partial_signatures]
                     self.signature = Signature.create(self.aggregate_nonce.R, self.message, parts)
 
-    def deserialize(self) -> None:
-        """Called when the results of a json.loads call are passed to __init__."""
-        if 'id' in self:
-            self._id = UUID(bytes=b64decode(self['id']))
-        if 'protocol_state' in self:
-            self._protocol_state = ProtocolState[self['protocol_state']]
-        if 'number_of_participants' in self:
-            self._number_of_participants = self['number_of_participants']
-        if 'last_updated' in self:
-            self._last_updated = self['last_updated']
-        if 'skey' in self:
-            self._skey = SigningKey(b64decode(self['skey']))
-        if 'vkeys' in self:
-            self._vkeys = tuple([VerifyKey(b64decode(vk)) for vk in self['vkeys']])
-        if 'nonce_commitments' in self:
-            commitments = {}
-            for name in self['nonce_commitments']:
-                n = VerifyKey(b64decode(name))
-                commitments[n] = NonceCommitment(b64decode(self['nonce_commitments'][name]))
-            self._nonce_commitments = commitments
-        if 'nonce_points' in self:
-            nonce_points = {}
-            for name in self['nonce_points']:
-                n = VerifyKey(b64decode(name))
-                nonce_points[n] = Nonce(b64decode(self['nonce_points'][name]))
-            self._nonce_points = nonce_points
-        if 'aggregate_nonce' in self:
-            self._aggregate_nonce = Nonce(b64decode(self['aggregate_nonce']))
-        if 'message' in self:
-            self._message = b64decode(self['message'])
-        if 'partial_signatures' in self:
-            parts = {}
-            for name in self['partial_signatures']:
-                n = VerifyKey(b64decode(name))
-                parts[n] = PartialSignature(b64decode(self['partial_signatures'][name]))
-            self._partial_signatures = parts
-        if 'public_key' in self:
-            self._public_key = PublicKey(b64decode(self['public_key']))
-        if 'signature' in self:
-            self._signature = Signature(b64decode(self['signature']))
-
     @property
     def id(self):
         return self._id if hasattr(self, '_id') else None
@@ -268,6 +288,7 @@ class SigningSession(dict):
         if not isinstance(value, UUID):
             raise TypeError('id must be a UUID')
         self['id'] = value.bytes
+        self._id = value
 
     @property
     def number_of_participants(self):
@@ -288,6 +309,7 @@ class SigningSession(dict):
         if not isinstance(value, ProtocolState):
             raise TypeError('protocol_state must be a ProtocolState')
         self['protocol_state'] = value.name
+        self._protocol_state = value
 
     @property
     def last_updated(self):
