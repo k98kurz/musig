@@ -22,16 +22,16 @@ class TestMuSigSomething(unittest.TestCase):
     def test_Signature_is_a_class(self):
         assert inspect.isclass(musig.Signature)
 
-    def test_Signature_init_raises_ValueError_when_called_without_proper_params(self):
-        with self.assertRaises(ValueError):
+    def test_Signature_init_raises_TypeError_when_called_without_proper_params(self):
+        with self.assertRaises(TypeError) as err:
             musig.Signature()
-        with self.assertRaises(ValueError):
-            musig.Signature(('',''))
-        with self.assertRaises(ValueError):
-            musig.Signature({'a','b'})
+        assert str(err.exception) == 'data for initialization must be of type dict'
+        with self.assertRaises(TypeError):
+            musig.Signature('not a dict')
+        assert str(err.exception) == 'data for initialization must be of type dict'
 
     def test_Signature_instances_have_correct_attributes(self):
-        pkey = musig.PublicKey([self.signing_keys[0].verify_key])
+        pkey = musig.PublicKey.create([self.signing_keys[0].verify_key])
         n1 = musig.Nonce()
         M = b'hello world'
         ps1 = musig.PartialSignature.create(self.signing_keys[0], n1.r, pkey.L,
@@ -40,49 +40,41 @@ class TestMuSigSomething(unittest.TestCase):
         assert hasattr(sig, 'R') and type(sig.R) is bytes
         assert hasattr(sig, 'M') and type(sig.M) is bytes
         assert hasattr(sig, 's') and type(sig.s) is bytes
-        assert hasattr(sig, 'parts') and type(sig.parts) is list
+        assert hasattr(sig, 'parts') and type(sig.parts) is tuple
 
-    def test_Signature_deserialize_raises_ValueError_when_called_with_invalid_serialization(self):
-        with self.assertRaises(ValueError):
-            musig.Signature.deserialize(b'invalid bytes')
-        with self.assertRaises(ValueError):
-            musig.Signature.deserialize('invalid str')
-        with self.assertRaises(ValueError):
-            musig.Signature.deserialize('invalid.str')
-        with self.assertRaises(ValueError):
-            musig.Signature.deserialize(('a', 'b'))
-        with self.assertRaises(ValueError):
-            musig.Signature.deserialize({'a', 'b'})
-        with self.assertRaises(ValueError):
-            musig.Signature.deserialize({'a': 'b'})
+    def test_Signature_from_bytes_raises_ValueError_or_TypeError_when_called_with_invalid_serialization(self):
+        with self.assertRaises(TypeError) as err:
+            musig.Signature.from_bytes('not bytes')
+        assert str(err.exception) == 'data must be bytes with length at least 65'
+        with self.assertRaises(ValueError) as err:
+            musig.Signature.from_bytes(b'invalid bytes')
+        assert str(err.exception) == 'data must be bytes with length at least 65'
 
     def test_Signature_instances_serialize_and_deserialize_properly(self):
-        pkey = musig.PublicKey([self.signing_keys[0].verify_key])
+        pkey = musig.PublicKey.create([self.signing_keys[0].verify_key])
         n1 = musig.Nonce()
         M = b'hello world'
         ps1 = musig.PartialSignature.create(self.signing_keys[0], n1.r, pkey.L,
             pkey, n1.R, M)
-        sig = musig.Signature.create(n1.R, M, [ps1])
-        str1 = str(sig)
-        str2 = repr(sig)
-        js = dumps(sig)
-        sig1 = musig.Signature.deserialize(str1)
-        sig2 = musig.Signature.deserialize(str2)
-        sig3 = musig.Signature.deserialize('json.' + js)
-        sig4 = musig.Signature(loads(js))
+        sig0 = musig.Signature.create(n1.R, M, [ps1])
+        bts1 = bytes(sig0)
+        str2 = str(sig0)
+        js = dumps(sig0)
+        sig1 = musig.Signature.from_bytes(bts1)
+        sig2 = musig.Signature.from_str(str2)
+        sig3 = musig.Signature(loads(js))
 
-        assert type(str1) is str and str1[:2] == '16'
-        assert type(str2) is str and str2[:2] == '64'
+        assert type(bts1) is bytes and len(bts1) == 64 + len(M)
+        assert type(str2) is str and len(str2) == 2*len(bts1)
         assert type(js) is str
 
         assert sig1 == sig2
         assert sig1 == sig3
-        assert sig1 == sig4
 
     def test_Signature_create_raises_ValueError_when_supplied_invalid_params(self):
         M = b'hello world'
         n = musig.Nonce()
-        pkey = musig.PublicKey([s.verify_key for s in self.signing_keys])
+        pkey = musig.PublicKey.create([s.verify_key for s in self.signing_keys])
         ps = musig.PartialSignature.create(self.signing_keys[0], n.r, pkey.L,
             pkey, n.R, M)
         with self.assertRaises(ValueError):
