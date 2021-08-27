@@ -15,6 +15,7 @@ rest of the SDK.
 - [x] Standardize and clean up serialization/deserialization.
 - [ ] General code cleanup.
 - [ ] Full documentation.
+- [ ] Add adaptor signature system.
 - [ ] Migrate final module back into Pycelium-SDK.
 
 # Installation
