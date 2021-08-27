@@ -44,10 +44,10 @@ class TestMuSigPartialSignature(unittest.TestCase):
     def test_PartialSignature_from_bytes_raises_ValueError_or_TypeError_when_given_invalid_serialization(self):
         with self.assertRaises(TypeError) as err:
             musig.PartialSignature.from_bytes('not bytes')
-        assert str(err.exception) == 'data must be bytes of len == 64 or >=96'
+        assert str(err.exception) == 'data must be bytes of len == 32 or >=96'
         with self.assertRaises(ValueError) as err:
             musig.PartialSignature.from_bytes(b'invalid bytes')
-        assert str(err.exception) == 'data must be bytes of len == 64 or >=96'
+        assert str(err.exception) == 'data must be bytes of len == 32 or >=96'
 
     def test_PartialSignature_instances_serialize_and_deserialize_properly(self):
         pkey = musig.PublicKey.create(self.verify_keys[0:1])
@@ -67,6 +67,20 @@ class TestMuSigPartialSignature(unittest.TestCase):
         assert ps0 == ps1
         assert ps1 == ps2
         assert ps2 == ps3
+
+    def test_PartialSignature_public_method_returns_instance_with_only_s_i(self):
+        pkey = musig.PublicKey.create(self.verify_keys[0:1])
+        n = musig.Nonce()
+        M = b'hello world'
+        ps0 = musig.PartialSignature.create(self.signing_keys[0], n.r, pkey.L,
+            pkey, n.R, M)
+        ps1 = ps0.public()
+
+        assert ps1.s_i is not None
+        assert ps1.s_i == ps0.s_i
+        assert ps1.c_i is None
+        assert ps1.R is None
+        assert ps1.M is None
 
 if __name__ == '__main__':
     unittest.main()

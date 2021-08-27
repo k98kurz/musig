@@ -25,32 +25,34 @@ class PartialSignature(AbstractPartialSignature):
             raise TypeError('data must be type dict')
 
         if 'c_i' in data:
-            self.c_i = b64decode(data['c_i'])
+            self.c_i = data['c_i'] if type(data['c_i']) is bytes else b64decode(data['c_i'])
         if 's_i' in data:
-            self.s_i = b64decode(data['s_i'])
+            self.s_i = data['s_i'] if type(data['s_i']) is bytes else b64decode(data['s_i'])
         if 'R' in data:
-            self.R = b64decode(data['R'])
+            self.R = data['R'] if type(data['R']) is bytes else b64decode(data['R'])
         if 'M' in data:
-            self.M = b64decode(data['M'])
+            self.M = data['M'] if type(data['M']) is bytes else b64decode(data['M'])
 
     def __bytes__(self) -> bytes:
         """Result of calling bytes() on an instance."""
-        return self.c_i + self.s_i + self.R + self.M
+        if self.c_i is not None and self.R is not None and self.M is not None:
+            return self.s_i + self.c_i + self.R + self.M
+        return self.s_i
 
     @classmethod
     def from_bytes(cls, data: bytes) -> PartialSignature:
         if type(data) is not bytes:
-            raise TypeError('data must be bytes of len == 64 or >=96')
+            raise TypeError('data must be bytes of len == 32 or >=96')
 
-        if len(data) < 64 or (len(data) > 64 and len(data) < 96):
-            raise ValueError('data must be bytes of len == 64 or >=96')
+        if len(data) < 32 or (len(data) > 32 and len(data) < 96):
+            raise ValueError('data must be bytes of len == 32 or >=96')
 
         new_data = {
-            'c_i': b64encode(data[:32]).decode(),
-            's_i': b64encode(data[32:64]).decode()
+            's_i': b64encode(data[:32]).decode()
         }
 
         if len(data) >= 96:
+            new_data['c_i'] = b64encode(data[32:64]).decode()
             new_data['R'] = b64encode(data[64:96]).decode()
 
         if len(data) > 96:
@@ -75,6 +77,9 @@ class PartialSignature(AbstractPartialSignature):
             'R': b64encode(R).decode(),
             'M': b64encode(M).decode(),
         })
+
+    def public(self) -> PartialSignature:
+        return self.__class__({'s_i': self.s_i})
 
     @property
     def c_i(self):

@@ -102,6 +102,10 @@ class AbstractPartialSignature(ExtendedDict):
             R: bytes, M: bytes) -> dict:
         ...
 
+    @abstractmethod
+    def public(self) -> AbstractPartialSignature:
+        ...
+
     @abstractproperty
     def c_i(self):
         ...
