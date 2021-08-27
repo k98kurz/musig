@@ -72,7 +72,7 @@ class SingleSigKey(AbstractSingleSigKey):
         """Sign a message."""
         nonce = Nonce()
         sig = PartialSignature.create(self.skey, nonce.r, self.vkey.L,
-            self.vkey.public(), nonce.R, M)
+            self.vkey, nonce.R, M)
         return Signature.create(nonce.R, M, [sig])
 
     @property

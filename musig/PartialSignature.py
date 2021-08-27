@@ -67,7 +67,7 @@ class PartialSignature(AbstractPartialSignature):
             X (aggregate key), R (aggregate public nonce), and M (message).
         """
         x_i = derive_key_from_seed(bytes(skey))
-        c_i = derive_challenge(L, bytes(skey.verify_key), bytes(X), R, M)
+        c_i = derive_challenge(L, bytes(skey.verify_key), bytes(X.public()), R, M)
         s_i = nacl.bindings.crypto_core_ed25519_scalar_mul(c_i, x_i)
         s_i = nacl.bindings.crypto_core_ed25519_scalar_add(r, s_i)
 
