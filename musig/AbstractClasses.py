@@ -10,6 +10,11 @@ from uuid import UUID
 class ExtendedDict(dict):
     """ExtendedDict handles some serialization/deserialization."""
     def __setitem__(self, key, value) -> None:
+        """Method that is called when `instance[key]=value` is used.
+            Any key that is not a property of the instance will not be set.
+            Any key that is set will have its values encoded to be maximally
+            compatible with json serialization.
+        """
         if hasattr(self, key):
             setattr(self, f'_{key}', value)
             if type(value) in (int, str):
@@ -17,7 +22,13 @@ class ExtendedDict(dict):
             elif type(value) is bytes:
                 super().__setitem__(key, b64encode(value).decode())
             elif type(value) in (tuple, list):
-                super().__setitem__(key, tuple([b64encode(bytes(k)).decode() for k in value]))
+                val = []
+                for item in value:
+                    if type(item) in (int, str):
+                        val.append(item)
+                    else:
+                        val.append(b64encode(item if type(item) is bytes else bytes(item)).decode())
+                super().__setitem__(key, tuple(val))
             elif type(value) is dict:
                 nv = {}
                 for name in value:
