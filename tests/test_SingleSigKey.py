@@ -23,58 +23,53 @@ class TestMuSigSomething(unittest.TestCase):
         assert inspect.isclass(musig.SingleSigKey)
 
     def test_SingleSigKey_init_raises_ValueError_when_given_None_param(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(ValueError) as err:
             musig.SingleSigKey()
-        with self.assertRaises(ValueError):
-            musig.SingleSigKey(None)
+        assert str(err.exception) == 'cannot instantiate an empty SingleSigKey'
+        with self.assertRaises(TypeError) as err:
+            musig.SingleSigKey('not a dict')
+        assert str(err.exception) == 'data for initialization must be of type dict'
 
     def test_SingleSigKey_instances_have_correct_attributes(self):
-        ssk = musig.SingleSigKey(self.signing_keys[0])
+        ssk = musig.SingleSigKey({'skey': self.signing_keys[0]})
         assert hasattr(ssk, 'skey') and isinstance(ssk.skey, SigningKey)
         assert hasattr(ssk, 'vkey') and isinstance(ssk.vkey, musig.PublicKey)
         assert hasattr(ssk, 'vkey_base') and isinstance(ssk.vkey_base, VerifyKey)
         assert ssk.skey == self.signing_keys[0]
         assert ssk.vkey_base == self.signing_keys[0].verify_key
 
-    def test_SingleSigKey_deserialize_raises_ValueError_for_invalid_params(self):
-        with self.assertRaises(ValueError):
-            musig.SingleSigKey.deserialize(b'invalid bytes')
-        with self.assertRaises(ValueError):
-            musig.SingleSigKey.deserialize('invalid str')
-        with self.assertRaises(ValueError):
-            musig.SingleSigKey.deserialize('invalid.str')
-        with self.assertRaises(ValueError):
-            musig.SingleSigKey.deserialize(('a', 'b'))
-        with self.assertRaises(ValueError):
-            musig.SingleSigKey.deserialize({'a', 'b'})
-        with self.assertRaises(ValueError):
-            musig.SingleSigKey.deserialize({'a': 'b'})
+    def test_SingleSigKey_from_bytes_raises_ValueError_or_TypeError_for_invalid_params(self):
+        with self.assertRaises(ValueError) as err:
+            musig.SingleSigKey.from_bytes(b'invalid bytes')
+        assert str(err.exception) == 'bytes input must have length of 32'
+        with self.assertRaises(TypeError):
+            musig.SingleSigKey.from_bytes('not bytes')
+        assert str(err.exception) == 'bytes input must have length of 32'
 
     def test_SingleSigKey_instances_serialize_and_deserialize_properly(self):
-        ssk0 = musig.SingleSigKey(self.signing_keys[0])
-        str1 = str(ssk0)
-        str2 = repr(ssk0)
+        ssk0 = musig.SingleSigKey({'skey': self.signing_keys[0]})
+        bts1 = bytes(ssk0)
+        str2 = str(ssk0)
         js = dumps(ssk0)
-        ssk1 = musig.SingleSigKey(str1)
-        ssk2 = musig.SingleSigKey(str2)
-        ssk3 = musig.SingleSigKey('json.' + js)
-        ssk4 = musig.SingleSigKey(loads(js))
+        ssk1 = musig.SingleSigKey.from_bytes(bts1)
+        ssk2 = musig.SingleSigKey.from_str(str2)
+        ssk3 = musig.SingleSigKey(loads(js))
 
-        assert type(str1) is str and str1[:2] == '16'
-        assert type(str2) is str and str2[:2] == '64'
+        assert type(bts1) is bytes and len(bts1) == 32
+        assert type(str2) is str and len(str2) == 64
         assert type(js) is str
 
-        assert ssk1 == ssk2
-        assert ssk1 == ssk3
-        assert ssk1 == ssk4
+        assert ssk0 == ssk1
+        assert ssk0 == ssk2
+        assert ssk0 == ssk3
 
     def test_SingleSigKey_sign_message_method_returns_Signature(self):
-        ssk = musig.SingleSigKey(self.signing_keys[0])
+        ssk = musig.SingleSigKey({'skey': self.signing_keys[0]})
         sig = ssk.sign_message(b'hello world')
         assert isinstance(sig, musig.Signature)
 
     def test_SingleSigKey_signatures_are_verified_by_relevant_PublicKey(self):
-        ssk = musig.SingleSigKey(self.signing_keys[0])
+        ssk = musig.SingleSigKey({'skey': self.signing_keys[0]})
         sig = ssk.sign_message(b'hello world')
         assert ssk.vkey.verify(sig)
 

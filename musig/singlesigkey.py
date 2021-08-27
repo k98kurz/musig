@@ -1,67 +1,55 @@
 from __future__ import annotations
-from base64 import b64encode, b64decode
-from json import loads
+from base64 import b64decode
 from musig.abstractclasses import AbstractSingleSigKey
-from musig.helpers import bytes_are_same
 from musig.nonce import Nonce
 from musig.partialsignature import PartialSignature
 from musig.publickey import PublicKey
 from musig.signature import Signature
-from nacl.signing import SigningKey
+from nacl.signing import SigningKey, VerifyKey
 import nacl.bindings
 
 
-class SingleSigKey(dict, AbstractSingleSigKey):
+class SingleSigKey(AbstractSingleSigKey):
     """A simple-to-use class that generates 1-of-1 MuSig signatures."""
 
-    def __init__(self, data=None) -> None:
+    def __init__(self, data: dict = None) -> None:
         """Initialize using a nacl.signing.SigningKey or deserialize.
-            Call with `data=SigningKey` to create a new SingleSigKey.
-            Call with `data=str` or `data=bytes` to implicitly call `deserialize`.
+            Call with `data=SigningKey` or `data=bytes` to create a new SingleSigKey.
             Call with `data=dict` to instantiate with key:value definition, where
             each value is b64 encoded.
         """
         if data is None:
             raise ValueError('cannot instantiate an empty SingleSigKey')
 
-        if isinstance(data, str):
-            data = self.deserialize(data)
+        if not isinstance(data, dict):
+            raise TypeError('data for initialization must be of type dict')
 
-        if isinstance(data, bytes) and len(data) == nacl.bindings.crypto_scalarmult_ed25519_SCALARBYTES:
-            # restore from seed
-            data = SigningKey(data)
-
-        if isinstance(data, SigningKey):
-            # create from a SigningKey
-            self._skey = data
-            self._vkey_base = data.verify_key
-            self._vkey = PublicKey([self._vkey_base])
-
-        if isinstance(data, dict):
-            # deserialized json
-            if 'skey' in data:
+        if 'skey' in data:
+            if isinstance(data['skey'], SigningKey):
+                self.skey = data['skey']
+            else:
                 seed = data['skey'] if isinstance(data['skey'], bytes) else b64decode(data['skey'])
-                self._skey = SigningKey(seed)
-                self._vkey_base = self._skey.verify_key
-                self._vkey = PublicKey([self._vkey_base])
+                self.skey = SigningKey(seed)
 
-        super().__init__({
-            'skey': b64encode(bytes(self._skey)).decode(),
-            'vkey_base': b64encode(bytes(self._vkey_base)).decode(),
-            'vkey': b64encode(bytes(self._vkey)).decode()
-        })
+        if 'vkey_base' in data:
+            if isinstance(data['vkey_base'], VerifyKey):
+                self.vkey_base = data['vkey_base']
+            else:
+                vkey_base = data['vkey_base'] if type(data['vkey_base']) is bytes else b64decode(data['vkey_base'])
+                self.vkey_base = VerifyKey(vkey_base)
 
-    def __str__(self) -> str:
-        """Result of calling str() on an instance."""
-        if self.skey is not None:
-            return '16.' + bytes(self.skey).hex()
-        return ''
+        if 'vkey' in data:
+            if isinstance(data['vkey'], PublicKey):
+                self.vkey = data['vkey']
+            else:
+                vkey = data['vkey'] if type(data['vkey']) is bytes else b64decode(data['vkey'])
+                self.vkey = PublicKey.from_bytes(vkey)
 
-    def __repr__(self) -> str:
-        """Result of calling repr() on an instance."""
-        if self.skey is not None:
-            return '64.' + b64encode(bytes(self.skey)).decode()
-        return ''
+        if self.vkey_base is None and self.skey is not None:
+            self.vkey_base = self.skey.verify_key
+
+        if self.vkey is None and self.vkey_base is not None:
+            self.vkey = PublicKey.create([self.vkey_base])
 
     def __bytes__(self) -> bytes:
         """Result of calling bytes() on an instance."""
@@ -69,52 +57,53 @@ class SingleSigKey(dict, AbstractSingleSigKey):
             return bytes(self.skey)
         return b''
 
-    def __hash__(self) -> int:
-        """Make class hashable for inclusion in sets."""
-        return hash(bytes(self))
-
-    def __eq__(self, other) -> bool:
-        """Enforce timing-attack safe comparison."""
-        return bytes_are_same(bytes(self), bytes(other))
-
-    def serialize(self) -> str:
-        """Return a serialized representation of the instance."""
-        return repr(self)
-
     @classmethod
-    def deserialize(cls, data) -> SingleSigKey:
-        if isinstance(data, bytes):
-            if len(data) != nacl.bindings.crypto_scalarmult_ed25519_SCALARBYTES:
-                raise ValueError('bytes input must have length of ' +
+    def from_bytes(cls, data: bytes) -> SingleSigKey:
+        if type(data) is not bytes:
+            raise TypeError('bytes input must have length of ' +
                     str(nacl.bindings.crypto_scalarmult_ed25519_SCALARBYTES))
-            return cls(data)
-        if isinstance(data, str):
-            # break into parts
-            parts = data.split('.')
-            if len(parts) < 2:
-                raise ValueError('input str must have at least 2 parts delimited by .')
+        if len(data) != nacl.bindings.crypto_scalarmult_ed25519_SCALARBYTES:
+            raise ValueError('bytes input must have length of ' +
+                str(nacl.bindings.crypto_scalarmult_ed25519_SCALARBYTES))
 
-            if parts[0] == '16':
-                seed = bytes.fromhex(parts[1])
-                return cls(SigningKey(seed))
-            elif parts[0] == '64':
-                seed = b64decode(parts[1])
-                return cls(SigningKey(seed))
-            elif parts[0] == 'json':
-                return cls(loads('.'.join(parts[1:])))
-            else:
-                raise ValueError('unknown/invalid serialization')
-        else:
-            raise ValueError('unknown/invalid serialization')
+        return cls({'skey': SigningKey(data)})
 
     def sign_message(self, M: bytes) -> Signature:
         """Sign a message."""
         nonce = Nonce()
         sig = PartialSignature.create(self.skey, nonce.r, self.vkey.L,
-            self.vkey, nonce.R, M)
+            self.vkey.public(), nonce.R, M)
         return Signature.create(nonce.R, M, [sig])
 
-    # readonly properties
-    skey = property(lambda self: self._skey if hasattr(self, '_skey') else None)
-    vkey = property(lambda self: self._vkey if hasattr(self, '_vkey') else None)
-    vkey_base = property(lambda self: self._vkey_base if hasattr(self, '_vkey_base') else None)
+    @property
+    def skey(self):
+        return self._skey if hasattr(self, '_skey') else None
+
+    @skey.setter
+    def skey(self, data: SigningKey):
+        if not isinstance(data, SigningKey):
+            raise TypeError('skey must be SigningKey')
+
+        self['skey'] = data
+
+    @property
+    def vkey(self):
+        return self._vkey if hasattr(self, '_vkey') else None
+
+    @vkey.setter
+    def vkey(self, data: PublicKey):
+        if not isinstance(data, PublicKey):
+            raise TypeError('vkey must be PublicKey')
+
+        self['vkey'] = data
+
+    @property
+    def vkey_base(self):
+        return self._vkey_base if hasattr(self, '_vkey_base') else None
+
+    @vkey_base.setter
+    def vkey_base(self, data: VerifyKey):
+        if not isinstance(data, VerifyKey):
+            raise TypeError('vkey_base must be VerifyKey')
+
+        self['vkey_base'] = data
