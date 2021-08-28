@@ -15,28 +15,35 @@ class ProtocolState(Enum):
     """
     EMPTY = 0x00
     INITIALIZED = 0x10
+
     AWAITING_PARTICIPANT_KEY = 0x11
-    ACK_PARTICIPANT_KEY = 0x12
+    SENDING_PARTICIPANT_KEY = 0x12
+    ACK_PARTICIPANT_KEY = 0x13
     REJECT_PARTICIPANT_KEY = 0x1f
+
     AWAITING_COMMITMENT = 0x20
-    ACK_COMMITMENT = 0x21
+    SENDING_COMMITMENT = 0x21
+    ACK_COMMITMENT = 0x22
     TIME_EXCEEDED_AWAITING_COMMITMENT = 0x2e
     REJECT_COMMITMENT = 0x2f
-    SENDING_COMMITMENT = 0x30
-    AWAITING_MESSAGE = 0x40
-    ACK_MESSAGE = 0x41
-    REJECT_MESSAGE = 0x4f
-    SENDING_MESSAGE = 0x50
-    AWAITING_NONCE = 0x60
-    ACK_NONCE = 0x61
-    TIME_EXCEEDED_AWAITING_NONCE = 0x6e
-    REJECT_NONCE = 0x6f
-    SENDING_NONCE = 0x70
-    AWAITING_PARTIAL_SIGNATURE = 0x80
-    ACK_PARTIAL_SIGNATURE = 0x81
-    TIME_EXCEEDED_AWAITING_PARTIAL_SIGNATURE = 0x8e
-    REJECT_PARTIAL_SIGNATURE = 0x8f
-    SENDING_PARTIAL_SIGNATURE = 0x90
+
+    AWAITING_MESSAGE = 0x30
+    SENDING_MESSAGE = 0x31
+    ACK_MESSAGE = 0x32
+    REJECT_MESSAGE = 0x3f
+
+    AWAITING_NONCE = 0x40
+    SENDING_NONCE = 0x41
+    ACK_NONCE = 0x42
+    TIME_EXCEEDED_AWAITING_NONCE = 0x4e
+    REJECT_NONCE = 0x4f
+
+    AWAITING_PARTIAL_SIGNATURE = 0x50
+    SENDING_PARTIAL_SIGNATURE = 0x51
+    ACK_PARTIAL_SIGNATURE = 0x52
+    TIME_EXCEEDED_AWAITING_PARTIAL_SIGNATURE = 0x5e
+    REJECT_PARTIAL_SIGNATURE = 0x5f
+
     COMPLETED = 0xe0
     ABORTED = 0xff
 
@@ -230,6 +237,7 @@ class ProtocolMessage(AbstractProtocolMessage):
         parts = []
         message = self.message
         if self.state in (
+                            ProtocolState.SENDING_PARTICIPANT_KEY,
                             ProtocolState.ACK_PARTICIPANT_KEY,
                             ProtocolState.REJECT_PARTICIPANT_KEY,
                             ProtocolState.AWAITING_COMMITMENT,
@@ -242,9 +250,9 @@ class ProtocolMessage(AbstractProtocolMessage):
                 message = message[32:]
 
         if self.state in (
+                            ProtocolState.SENDING_COMMITMENT,
                             ProtocolState.ACK_COMMITMENT,
                             ProtocolState.REJECT_COMMITMENT,
-                            ProtocolState.SENDING_COMMITMENT,
                         ):
             # every 32 bytes will be a NonceCommitment
             while len(message) > 0:
@@ -252,9 +260,9 @@ class ProtocolMessage(AbstractProtocolMessage):
                 message = message[32:]
 
         if self.state in (
+                            ProtocolState.SENDING_NONCE,
                             ProtocolState.ACK_NONCE,
                             ProtocolState.REJECT_NONCE,
-                            ProtocolState.SENDING_NONCE,
                         ):
             # every 32 bytes will be a Nonce
             while len(message) > 0:
@@ -262,9 +270,9 @@ class ProtocolMessage(AbstractProtocolMessage):
                 message = message[32:]
 
         if self.state in (
+                            ProtocolState.SENDING_PARTIAL_SIGNATURE,
                             ProtocolState.ACK_PARTIAL_SIGNATURE,
                             ProtocolState.REJECT_PARTIAL_SIGNATURE,
-                            ProtocolState.SENDING_PARTIAL_SIGNATURE,
                         ):
             # every 32 bytes will be a PartialSignature
             while len(message) > 0:
@@ -330,6 +338,7 @@ class ProtocolMessage(AbstractProtocolMessage):
             })
 
         if state in (
+                        ProtocolState.SENDING_PARTICIPANT_KEY,
                         ProtocolState.ACK_PARTICIPANT_KEY,
                         ProtocolState.REJECT_PARTICIPANT_KEY,
                         ProtocolState.AWAITING_COMMITMENT,
@@ -347,9 +356,9 @@ class ProtocolMessage(AbstractProtocolMessage):
             })
 
         if state in (
+                        ProtocolState.SENDING_COMMITMENT,
                         ProtocolState.ACK_COMMITMENT,
                         ProtocolState.REJECT_COMMITMENT,
-                        ProtocolState.SENDING_COMMITMENT
                     ):
             for nc in data:
                 if not isinstance(nc, NonceCommitment) and (type(nc) is not bytes or len(nc) != 32):
@@ -362,9 +371,9 @@ class ProtocolMessage(AbstractProtocolMessage):
             })
 
         if state in (
+                        ProtocolState.SENDING_MESSAGE,
                         ProtocolState.ACK_MESSAGE,
                         ProtocolState.REJECT_MESSAGE,
-                        ProtocolState.SENDING_MESSAGE,
                     ):
             if not type(data[0]) in (str, bytes):
                 raise TypeError(f'datum for ProtocolMessage with state={state.name} must be str or bytes')
@@ -376,9 +385,9 @@ class ProtocolMessage(AbstractProtocolMessage):
             })
 
         if state in (
+                        ProtocolState.SENDING_NONCE,
                         ProtocolState.ACK_NONCE,
                         ProtocolState.REJECT_NONCE,
-                        ProtocolState.SENDING_NONCE,
                     ):
             for n in data:
                 if not isinstance(n, Nonce) and (type(n) is not bytes or len(n) != 32):
@@ -391,9 +400,9 @@ class ProtocolMessage(AbstractProtocolMessage):
             })
 
         if state in (
+                        ProtocolState.SENDING_PARTIAL_SIGNATURE,
                         ProtocolState.ACK_PARTIAL_SIGNATURE,
                         ProtocolState.REJECT_PARTIAL_SIGNATURE,
-                        ProtocolState.SENDING_PARTIAL_SIGNATURE,
                     ):
             for s in data:
                 if not isinstance(s, PartialSignature) and (type(s) is not bytes or len(s) != 32):

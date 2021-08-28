@@ -159,6 +159,33 @@ class TestMuSigProtocol(unittest.TestCase):
         # check deserialized message has valid signature
         assert deserialized.check_signature()
 
+    def test_ProtocolMessage_for_SENDING_PARTICIPANT_KEY(self):
+        # scenario: self.signing_keys[0] is sending its vkey
+        vkey = self.signing_keys[0].verify_key
+        pm = musig.ProtocolMessage.create(self.uuid, musig.ProtocolState.SENDING_PARTICIPANT_KEY, [vkey])
+        assert isinstance(pm, musig.ProtocolMessage)
+        assert hasattr(pm, 'state') and pm.state is musig.ProtocolState.SENDING_PARTICIPANT_KEY
+        assert hasattr(pm, 'message') and type(pm.message) is bytes
+        assert pm.message == bytes(vkey)
+        assert hasattr(pm, 'session_id')
+        assert isinstance(pm.session_id, UUID) and pm.session_id == self.uuid
+
+        # add a signature
+        pm.add_signature(self.signing_keys[0])
+        assert hasattr(pm, 'signature') and type(pm.signature) is NaclSignedMessage
+        assert hasattr(pm, 'vkey') and type(pm.vkey) is VerifyKey
+
+        # test serialization and deserialization
+        serialized = bytes(pm)
+        assert len(serialized) > 0
+        deserialized = musig.ProtocolMessage.from_bytes(serialized)
+        assert isinstance(deserialized, musig.ProtocolMessage)
+        assert deserialized == pm
+        assert deserialized.message == bytes(vkey)
+
+        # check deserialized message has valid signature
+        assert deserialized.check_signature()
+
     def test_ProtocolMessage_for_ACK_PARTICIPANT_KEY(self):
         # scenario: self.signing_keys[0] is acknowledging receipt of a vkey
         vkey = self.signing_keys[1].verify_key
