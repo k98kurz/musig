@@ -26,7 +26,7 @@ class SigningSession(AbstractSigningSession):
         signature to avoid certain cryptographic attacks. Nonce commitments
         (hash(R_i)) are pre-shared instead of public nonces (R_i) to avoid
         vulnerability to the Wagner attack. Detailed documentation can be found
-        in the musig.readme.md file (eventually).
+        in the docs/musig.md file (eventually).
     """
 
     def __init__(self, data: dict = None) -> None:
@@ -118,21 +118,24 @@ class SigningSession(AbstractSigningSession):
             self.signature = Signature.from_bytes(s if type(s) is bytes else b64decode(s))
 
     def __setitem__(self, key, value) -> None:
+        """Slightly modified __setitem__ for updating timestamps appropriately."""
         super().__setitem__(key, value)
 
         if key == 'protocol_state':
             self._protocol_state = value if type(value) is ProtocolState else ProtocolState[value]
             self.last_updated = int(time() * 1000)
         elif key == 'last_updated':
-            self._last_updated = value
+            ...
         else:
             self.update_protocol_state()
 
     def __bytes__(self) -> bytes:
+        """Result of calling bytes() on instance; i.e. serialize to bytes."""
         return bytes(dumps(self), 'utf-8')
 
     @classmethod
     def from_bytes(cls, data: bytes) -> SigningSession:
+        """Deserializes output from __bytes__."""
         if type(data) is not bytes:
             raise TypeError('data must be bytes')
         return SigningSession(loads(str(data, 'utf-8')))
@@ -197,6 +200,7 @@ class SigningSession(AbstractSigningSession):
         self.nonce_points = nonce_points
 
     def make_partial_signature(self) -> PartialSignature:
+        """Create a partial signature to be broadcast to other participants."""
         return PartialSignature.create(self.skey, self.nonce_points[self.skey.verify_key].r,
             self.public_key.L, self.public_key, self.aggregate_nonce.R, self.message)
 
@@ -281,10 +285,12 @@ class SigningSession(AbstractSigningSession):
 
     @property
     def id(self):
+        """The UUID of the session."""
         return self._id if hasattr(self, '_id') else None
 
     @id.setter
     def id(self, value):
+        """The UUID of the session."""
         if not isinstance(value, UUID):
             raise TypeError('id must be a UUID')
         self['id'] = value.bytes
@@ -292,51 +298,60 @@ class SigningSession(AbstractSigningSession):
 
     @property
     def number_of_participants(self):
+        """The number of participants expected to participate in the protocol."""
         return self._number_of_participants if hasattr(self, '_number_of_participants') else None
 
     @number_of_participants.setter
     def number_of_participants(self, value):
+        """The number of participants expected to participate in the protocol."""
         if not isinstance(value, int):
             raise TypeError('number_of_participants must be an int')
         self['number_of_participants'] = value
 
     @property
     def protocol_state(self):
+        """The current state of the session."""
         return self._protocol_state if hasattr(self, '_protocol_state') else None
 
     @protocol_state.setter
     def protocol_state(self, value):
+        """The current state of the session."""
         if not isinstance(value, ProtocolState):
             raise TypeError('protocol_state must be a ProtocolState')
         self['protocol_state'] = value.name
-        self._protocol_state = value
 
     @property
     def last_updated(self):
+        """A timestamp recording the last time the protocol state was updated."""
         return self._last_updated if hasattr(self, '_last_updated') else None
 
     @last_updated.setter
     def last_updated(self, value):
+        """A timestamp recording the last time the protocol state was updated."""
         if type(value) not in (float, int):
             raise TypeError('last_updated must be a timestamp')
         self['last_updated'] = int(value)
 
     @property
     def skey(self):
+        """The SigningKey of the participant using this instance."""
         return self._skey if hasattr(self, '_skey') else None
 
     @skey.setter
     def skey(self, value):
+        """The SigningKey of the participant using this instance."""
         if not isinstance(value, SigningKey):
             raise TypeError('skey must be a nacl.signing.SigningKey')
         self['skey'] = value
 
     @property
     def vkeys(self):
+        """A tuple of participant VerifyKeys."""
         return self._vkeys if hasattr(self, '_vkeys') else tuple()
 
     @vkeys.setter
     def vkeys(self, value):
+        """A tuple of participant VerifyKeys."""
         if type(value) not in (tuple, list):
             raise TypeError('vkeys must be a tuple or list of nacl.signing.VerifyKeys')
 
@@ -348,10 +363,12 @@ class SigningSession(AbstractSigningSession):
 
     @property
     def nonce_commitments(self):
+        """A dict mapping participant VerifyKey to NonceCommitment."""
         return self._nonce_commitments if hasattr(self, '_nonce_commitments') else dict()
 
     @nonce_commitments.setter
     def nonce_commitments(self, value):
+        """A dict mapping participant VerifyKey to NonceCommitment."""
         if not isinstance(value, dict):
             raise TypeError('nonce_commitments must be a dict of form {VerifyKey:NonceCommitment}')
 
@@ -366,10 +383,20 @@ class SigningSession(AbstractSigningSession):
 
     @property
     def nonce_points(self):
+        """A dict mapping participant VerifyKey to Nonce. Note that the Nonce
+            for the participant using this instance will include the private
+            scalar value, but the Nonces of other participants will include only
+            the public point values.
+        """
         return self._nonce_points if hasattr(self, '_nonce_points') else dict()
 
     @nonce_points.setter
     def nonce_points(self, value):
+        """A dict mapping participant VerifyKey to Nonce. Note that the Nonce
+            for the participant using this instance will include the private
+            scalar value, but the Nonces of other participants will include only
+            the public point values.
+        """
         if not isinstance(value, dict):
             raise TypeError('nonce_points must be a dict of form {VerifyKey:Nonce}')
 
@@ -384,10 +411,12 @@ class SigningSession(AbstractSigningSession):
 
     @property
     def aggregate_nonce(self):
+        """The aggregate nonce point for the session."""
         return self._aggregate_nonce if hasattr(self, '_aggregate_nonce') else None
 
     @aggregate_nonce.setter
     def aggregate_nonce(self, value):
+        """The aggregate nonce point for the session."""
         if not isinstance(value, Nonce):
             raise TypeError('aggregate_nonce must be a Nonce')
 
@@ -395,10 +424,12 @@ class SigningSession(AbstractSigningSession):
 
     @property
     def message(self):
+        """The message to be n-of-n signed."""
         return self._message if hasattr(self, '_message') else None
 
     @message.setter
     def message(self, value):
+        """The message to be n-of-n signed."""
         value = bytes(value, 'utf-8') if type(value) is str else value
 
         if type(value) is not bytes:
@@ -408,10 +439,12 @@ class SigningSession(AbstractSigningSession):
 
     @property
     def partial_signatures(self):
+        """A dict mapping participant VerifyKey to PartialSignature (public values s_i only)."""
         return self._partial_signatures if hasattr(self, '_partial_signatures') else dict()
 
     @partial_signatures.setter
     def partial_signatures(self, value):
+        """A dict mapping participant VerifyKey to PartialSignature (public values s_i only)."""
         if not isinstance(value, dict):
             raise TypeError('partial_signatures must be a dict of form {VerifyKey:PartialSignature}')
 
@@ -426,10 +459,12 @@ class SigningSession(AbstractSigningSession):
 
     @property
     def public_key(self):
+        """The aggregate public key for the session."""
         return self._public_key if hasattr(self, '_public_key') else None
 
     @public_key.setter
     def public_key(self, value):
+        """The aggregate public key for the session."""
         if not isinstance(value, PublicKey):
             raise TypeError('public_key must be a PublicKey')
 
@@ -437,10 +472,12 @@ class SigningSession(AbstractSigningSession):
 
     @property
     def signature(self):
+        """The final n-of-n signature."""
         return self._signature if hasattr(self, '_signature') else None
 
     @signature.setter
     def signature(self, value):
+        """The final n-of-n signature."""
         if not isinstance(value, Signature):
             raise TypeError('signature must be a Signature')
 
