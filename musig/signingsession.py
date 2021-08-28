@@ -50,7 +50,9 @@ class SigningSession(AbstractSigningSession):
             else:
                 seed = data['skey'] if type(data['skey']) is bytes else b64decode(data['skey'])
                 self.skey = SigningKey(seed)
+
             if len(data.keys()) == 1:
+                # create an INITIALIZED session
                 self.id = uuid4()
                 self.vkeys = (self.skey.verify_key,)
                 self.protocol_state = ProtocolState.INITIALIZED
@@ -158,6 +160,7 @@ class SigningSession(AbstractSigningSession):
         self.vkeys = tuple(vkeys)
 
         if len(self.vkeys) == self.number_of_participants:
+            # if all participant keys have been gathered, derive the aggregate public key
             self.public_key = PublicKey.create(list(self.vkeys))
 
     def add_nonce_commitment(self, commitment: NonceCommitment, vkey: VerifyKey) -> None:
@@ -172,6 +175,7 @@ class SigningSession(AbstractSigningSession):
             self.protocol_state = ProtocolState.ABORTED
             raise ProtocolError('too many nonce commitments added for this vkey', ProtocolState.REJECT_COMMITMENT)
 
+        # update in this round-about way to make use of setter and __setitem__ logic
         nonce_commitments = self.nonce_commitments
         nonce_commitments[vkey] = commitment
 
@@ -193,9 +197,11 @@ class SigningSession(AbstractSigningSession):
 
         nonce_points = self.nonce_points
         if not self.nonce_commitments[vkey].is_valid_for(nonce):
+            # abort if the nonce does not validate for its commitment
             self.protocol_state = ProtocolState.ABORTED
             raise ProtocolError('Nonce invalid for NonceCommitment for this VerifyKey', ProtocolState.REJECT_NONCE)
 
+        # update in this round-about way to make use of setter and __setitem__ logic
         nonce_points[vkey] = nonce
         self.nonce_points = nonce_points
 
@@ -216,13 +222,16 @@ class SigningSession(AbstractSigningSession):
             self.protocol_state = ProtocolState.ABORTED
             raise ProtocolError('too many partial signatures added for this vkey', ProtocolState.REJECT_PARTIAL_SIGNATURE)
 
+        # update in this round-about way to make use of setter and __setitem__ logic
         partial_signatures = self.partial_signatures
         partial_signatures[vkey] = sig
         self.partial_signatures = partial_signatures
 
     def update_protocol_state(self) -> None:
         """Handle transitions between ProtocolStates as the SigningSession values
-            are updated.
+            are updated. This is called automatically after any value is updated.
+            The protocol state will only update when the necessary conditions
+            have been met.
         """
         elapsed_time = int((time() * 1000 - self.last_updated)/1000)
 
@@ -293,6 +302,7 @@ class SigningSession(AbstractSigningSession):
         """The UUID of the session."""
         if not isinstance(value, UUID):
             raise TypeError('id must be a UUID')
+
         self['id'] = value.bytes
         self._id = value
 
@@ -306,6 +316,7 @@ class SigningSession(AbstractSigningSession):
         """The number of participants expected to participate in the protocol."""
         if not isinstance(value, int):
             raise TypeError('number_of_participants must be an int')
+
         self['number_of_participants'] = value
 
     @property
@@ -318,6 +329,7 @@ class SigningSession(AbstractSigningSession):
         """The current state of the session."""
         if not isinstance(value, ProtocolState):
             raise TypeError('protocol_state must be a ProtocolState')
+
         self['protocol_state'] = value.name
 
     @property
@@ -330,6 +342,7 @@ class SigningSession(AbstractSigningSession):
         """A timestamp recording the last time the protocol state was updated."""
         if type(value) not in (float, int):
             raise TypeError('last_updated must be a timestamp')
+
         self['last_updated'] = int(value)
 
     @property
@@ -342,6 +355,7 @@ class SigningSession(AbstractSigningSession):
         """The SigningKey of the participant using this instance."""
         if not isinstance(value, SigningKey):
             raise TypeError('skey must be a nacl.signing.SigningKey')
+
         self['skey'] = value
 
     @property
