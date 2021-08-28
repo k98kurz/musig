@@ -21,7 +21,18 @@ rest of the SDK.
 
 # Installation
 
-Installation instructions will be here once the package is published to pypi.
+Currently, this project is still in development, so the best way to install is
+to clone the repo and then run the following from within the root directory
+(assuming a Linix terminal):
+
+```
+python -m venv venv/
+source venv/Scripts/activate
+pip install -r requirements.txt
+```
+
+These instructions will change once development is complete and the module is
+published as a package.
 
 # Testing
 
