@@ -2,7 +2,7 @@ from __future__ import annotations
 from base64 import b64encode, b64decode
 from json import loads
 from musig.abstractclasses import AbstractPublicKey, AbstractPartialSignature
-from musig.helpers import bytes_are_same, derive_key_from_seed, derive_challenge
+from musig.helpers import derive_key_from_seed, derive_challenge
 from nacl.signing import SigningKey
 import nacl.bindings
 

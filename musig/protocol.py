@@ -1,7 +1,6 @@
 from __future__ import annotations
-from base64 import b64encode, b64decode
+from base64 import b64decode
 from enum import Enum
-from hashlib import new
 from math import ceil, log2
 from musig import Nonce, NonceCommitment, PartialSignature, Signature
 from musig.abstractclasses import AbstractProtocolMessage

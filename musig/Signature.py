@@ -1,5 +1,5 @@
 from __future__ import annotations
-from base64 import b64encode, b64decode
+from base64 import b64decode
 from musig.abstractclasses import AbstractSignature, AbstractPartialSignature
 from musig.partialsignature import PartialSignature
 import nacl.bindings
