@@ -277,9 +277,26 @@ class TestMuSigSigningSession(unittest.TestCase):
         assert err.exception.protocol_state is musig.ProtocolState.REJECT_PARTIAL_SIGNATURE
         assert err.exception.message == 'unrecognized vkey'
 
+        # set up a copy to get a different partial signature
+        another_session = musig.SigningSession({**session})
+        nonce_commitments = another_session.nonce_commitments
+        nonce_points = another_session.nonce_points
+        n = musig.Nonce()
+        nc = musig.NonceCommitment.create(n)
+        nonce_commitments[another_session.skey.verify_key] = nc
+        another_session.nonce_commitments = nonce_commitments
+        nonce_points[another_session.skey.verify_key] = n
+        another_session.nonce_points = nonce_points
+        another_sig = another_session.make_partial_signature()
+
+        # we can add the same partial signature any number of times without problem
         session.add_partial_signature(sig, self.verify_keys[0])
+        session.add_partial_signature(sig, self.verify_keys[0])
+        session.add_partial_signature(sig, self.verify_keys[0])
+
+        # but an error will be raised if a conflicting signature is added
         with self.assertRaises(musig.ProtocolError) as err:
-            session.add_partial_signature(sig, self.verify_keys[0])
+            session.add_partial_signature(another_sig, self.verify_keys[0])
         assert err.exception.protocol_state is musig.ProtocolState.REJECT_PARTIAL_SIGNATURE
         assert err.exception.message == 'too many partial signatures added for this vkey'
 

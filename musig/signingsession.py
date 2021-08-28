@@ -218,7 +218,7 @@ class SigningSession(AbstractSigningSession):
             raise TypeError('vkey must be a VerifyKey')
         if vkey not in self.vkeys:
             raise ProtocolError('unrecognized vkey', ProtocolState.REJECT_PARTIAL_SIGNATURE)
-        if vkey in self.partial_signatures.keys():
+        if vkey in self.partial_signatures.keys() and sig != self.partial_signatures[vkey]:
             self.protocol_state = ProtocolState.ABORTED
             raise ProtocolError('too many partial signatures added for this vkey', ProtocolState.REJECT_PARTIAL_SIGNATURE)
 
