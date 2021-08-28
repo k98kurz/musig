@@ -42,12 +42,14 @@ class Nonce(AbstractNonce):
 
     @classmethod
     def from_bytes(cls, data: bytes) -> Nonce:
+        """Deserializes output from __bytes__."""
         if type(data) is not bytes:
             raise TypeError('cannot call from_bytes with non-bytes param')
         if len(data) not in (32, 33):
             raise ValueError('byte length must be 32 or 33')
 
         if len(data) == 33:
+            # restore full Nonce with private scalar and public point.
             r = data[1:]
             R = nacl.bindings.crypto_scalarmult_ed25519_base_noclamp(r)
             return cls({
@@ -55,6 +57,7 @@ class Nonce(AbstractNonce):
                 'R': b64encode(R).decode()
             })
         else:
+            # restore partial Nonce with just the public point.
             return cls({
                 'R': b64encode(data).decode()
             })
@@ -77,10 +80,12 @@ class Nonce(AbstractNonce):
     # properties
     @property
     def r(self):
+        """The private scalar value."""
         return self._r if hasattr(self, '_r') else None
 
     @r.setter
     def r(self, value):
+        """The private scalar value."""
         if not isinstance(value, bytes):
             raise TypeError('r value must be bytes')
         if len(value) != 32:
@@ -90,10 +95,12 @@ class Nonce(AbstractNonce):
 
     @property
     def R(self):
+        """The public point value."""
         return self._R if hasattr(self, '_R') else None
 
     @R.setter
     def R(self, value):
+        """The public point value."""
         if not isinstance(value, bytes):
             raise TypeError('R value must be bytes')
         if len(value) != 32:
