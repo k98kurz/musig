@@ -30,6 +30,7 @@ class NonceCommitment(AbstractNonceCommitment):
 
     @classmethod
     def create(cls, nonce: AbstractNonce) -> NonceCommitment:
+        """Create a new instance by hashing the given nonce."""
         if not isinstance(nonce, AbstractNonce):
             raise TypeError('nonce must be instance of AbstractNonce')
         HR = H_small(nonce.R)
@@ -52,6 +53,7 @@ class NonceCommitment(AbstractNonceCommitment):
 
     @classmethod
     def from_bytes(cls, data: bytes) -> NonceCommitment:
+        """Deserializes output from __bytes__."""
         if type(data) is not bytes:
             raise TypeError('data must be bytes of len 32')
         if len(data) != 32:
@@ -63,10 +65,12 @@ class NonceCommitment(AbstractNonceCommitment):
 
     @property
     def HR(self):
+        """The nonce commitment bytes (hash of a nonce point)."""
         return self._HR if hasattr(self, '_HR') else None
 
     @HR.setter
     def HR(self, value: bytes):
+        """The nonce commitment bytes (hash of a nonce point)."""
         if type(value) is not bytes:
             raise TypeError('HR must be bytes')
         if len(value) != 32:
