@@ -50,18 +50,24 @@ class ProtocolError(Exception):
         super().__init__(message)
 
     def __bytes__(self) -> bytes:
+        """Result of calling bytes() on instance; i.e. serialize to bytes."""
         return self.protocol_state.value.to_bytes(1, 'little') + bytes(self.message, 'utf-8')
 
     def __eq__(self, other) -> bool:
+        """Timing-attack safe comparison."""
         if not isinstance(other, self.__class__):
             return False
-        return self.message == other.message and self.protocol_state is other.protocol_state
+        return bytes_are_same(bytes(self), bytes(other))
 
     def __hash__(self) -> int:
+        """Result of calling hash() on instance; allows inclusion in sets and
+            use as a key in a dict (of dubious worth, but technically possible.)
+        """
         return hash(bytes(self))
 
     @classmethod
     def from_bytes(cls, bts: bytes) -> ProtocolError:
+        """Deserializes output from __bytes__."""
         protocol_state = ProtocolState(bts[0])
         message = str(bts[1:], 'utf-8')
         return cls(message, protocol_state)
@@ -75,6 +81,9 @@ class ProtocolMessage(AbstractProtocolMessage):
         Multiple serialization options are available for convenience.
     """
     def __init__(self, data: dict = None) -> None:
+        """Initialize with json.loads output of json.dumps serialization to
+            restore an instance. Otherwise, it is better to use the create method.
+        """
         if data is None:
             raise ValueError('cannot initialize an empty ProtocolMessage')
         if not isinstance(data, dict):
@@ -215,7 +224,10 @@ class ProtocolMessage(AbstractProtocolMessage):
         return cls(param)
 
     def parse_message(self) -> None:
-        """Handles parsing the message based upon the ProtocolState."""
+        """Parses the message into parts based upon protocol state, e.g. lists
+            of participant keys, nonces, nonce commitments, etc, storing the
+            result in self.message_parts/self['message_parts'].
+        """
         parts = []
         message = self.message
         if self.state in (
@@ -269,11 +281,18 @@ class ProtocolMessage(AbstractProtocolMessage):
         self.message_parts = parts
 
     def add_signature(self, skey: SigningKey) -> ProtocolMessage:
+        """Add a signature to the message using the provided SigningKey. This
+            signs the protocol state + message, attaching the signature and the
+            relevant VerifyKey to the instance.
+        """
         self.signature = skey.sign(self.state.value.to_bytes(1, 'little') + self.message)
         self.vkey = skey.verify_key
         return self
 
     def check_signature(self) -> bool:
+        """Return true if and only if the instance contains a VerifyKey and a
+            signature valid for the protocol state + message, else return False.
+        """
         try:
             if self.signature is None or self.vkey is None:
                 return False
@@ -284,6 +303,7 @@ class ProtocolMessage(AbstractProtocolMessage):
 
     @classmethod
     def create(cls, id: UUID, state: ProtocolState, data: list) -> ProtocolMessage:
+        """Create a new instance with the given id, state, and data."""
         if not isinstance(id, UUID) and state is not ProtocolState.EMPTY:
             raise TypeError('id must be a valid UUID for non-EMPTY state')
 
@@ -409,10 +429,12 @@ class ProtocolMessage(AbstractProtocolMessage):
     # properties
     @property
     def session_id(self):
+        """The UUID of the signing session for which this message was constructed."""
         return self._session_id if hasattr(self, '_session_id') else None
 
     @session_id.setter
     def session_id(self, data: UUID):
+        """The UUID of the signing session for which this message was constructed."""
         if type(data) not in (UUID, bytes):
             raise TypeError('session_id must be UUID or bytes')
 
@@ -421,10 +443,12 @@ class ProtocolMessage(AbstractProtocolMessage):
 
     @property
     def state(self):
+        """The protocol state of the message."""
         return self._state if hasattr(self, '_state') else None
 
     @state.setter
     def state(self, data: ProtocolState):
+        """The protocol state of the message."""
         if type(data) is not ProtocolState:
             raise TypeError('state must be ProtocolState')
 
@@ -433,10 +457,12 @@ class ProtocolMessage(AbstractProtocolMessage):
 
     @property
     def message(self):
+        """The message itself."""
         return self._message if hasattr(self, '_message') else None
 
     @message.setter
     def message(self, data: bytes):
+        """The message itself."""
         if type(data) not in (bytes, str):
             raise TypeError('message must be bytes or str')
 
@@ -444,10 +470,12 @@ class ProtocolMessage(AbstractProtocolMessage):
 
     @property
     def message_parts(self):
+        """The things that serialize into and deserialize from self.message."""
         return self._message_parts if hasattr(self, '_message_parts') else tuple()
 
     @message_parts.setter
     def message_parts(self, data: tuple):
+        """The things that serialize into and deserialize from self.message."""
         if type(data) not in (tuple, list):
             raise TypeError('message_parts must be list or tuple of values')
 
@@ -455,10 +483,12 @@ class ProtocolMessage(AbstractProtocolMessage):
 
     @property
     def signature(self):
+        """The Signature result of add_signature."""
         return self._signature if hasattr(self, '_signature') else None
 
     @signature.setter
     def signature(self, data: NaclSignedMessage):
+        """The Signature result of add_signature."""
         if type(data) is not NaclSignedMessage:
             raise TypeError('signature must be nacl.signing.SignedMessage')
 
@@ -466,10 +496,12 @@ class ProtocolMessage(AbstractProtocolMessage):
 
     @property
     def vkey(self):
+        """The VerifyKey used to verify the signature."""
         return self._vkey if hasattr(self, '_vkey') else None
 
     @vkey.setter
     def vkey(self, data: VerifyKey):
+        """The VerifyKey used to verify the signature."""
         if type(data) is not VerifyKey:
             raise TypeError('vkey must be VerifyKey')
 
