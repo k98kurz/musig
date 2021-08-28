@@ -32,10 +32,9 @@ class NonceCommitment(AbstractNonceCommitment):
         """Create a new instance by hashing the given nonce."""
         if not isinstance(nonce, AbstractNonce):
             raise TypeError('nonce must be instance of AbstractNonce')
+
         HR = H_small(nonce.R)
-        return cls({
-            'HR': HR
-        })
+        return cls({'HR': HR})
 
     def copy(self) -> NonceCommitment:
         """Make a copy without serializing and deserializing."""
@@ -58,9 +57,7 @@ class NonceCommitment(AbstractNonceCommitment):
         if len(data) != 32:
             raise ValueError('data must be bytes of len 32')
 
-        return cls({
-            'HR': b64encode(data).decode()
-        })
+        return cls({'HR': b64encode(data).decode()})
 
     @property
     def HR(self):

@@ -58,9 +58,7 @@ class Nonce(AbstractNonce):
             })
         else:
             # restore partial Nonce with just the public point.
-            return cls({
-                'R': b64encode(data).decode()
-            })
+            return cls({'R': b64encode(data).decode()})
 
     def __add__(self, other: Nonce) -> Nonce:
         """Result of the + operation between two Nonces."""
@@ -73,9 +71,7 @@ class Nonce(AbstractNonce):
 
     def public(self) -> Nonce:
         """Return a Nonce with only the public nonce point."""
-        return self.__class__({
-            'R': b64encode(self.R).decode()
-        })
+        return self.__class__({'R': b64encode(self.R).decode()})
 
     # properties
     @property
