@@ -35,7 +35,7 @@ class SigningSession(AbstractSigningSession):
             Initialize with a dict (output from json serialization/deserialization)
             to restore a previously used or customly configured SigningSession.
         """
-        self.last_updated = time() * 1000
+        self.last_updated = int(time() * 1000)
 
         if data is None:
             self.protocol_state = ProtocolState.EMPTY
@@ -122,7 +122,7 @@ class SigningSession(AbstractSigningSession):
 
         if key == 'protocol_state':
             self._protocol_state = value if type(value) is ProtocolState else ProtocolState[value]
-            self.last_updated = time() * 1000
+            self.last_updated = int(time() * 1000)
         elif key == 'last_updated':
             self._last_updated = value
         else:
@@ -175,7 +175,7 @@ class SigningSession(AbstractSigningSession):
         self.nonce_commitments = nonce_commitments
 
     def add_nonce(self, nonce: Nonce, vkey: VerifyKey) -> None:
-        """Add a NonceCommitment from a participant identified by the VerifyKey."""
+        """Add a Nonce from a participant identified by the VerifyKey."""
         if not isinstance(nonce, Nonce):
             raise TypeError('nonce must be Nonce')
         if not isinstance(vkey, VerifyKey):
@@ -337,16 +337,14 @@ class SigningSession(AbstractSigningSession):
 
     @vkeys.setter
     def vkeys(self, value):
-        value = tuple(value) if type(value) is list else value
-
-        if type(value) is not tuple:
+        if type(value) not in (tuple, list):
             raise TypeError('vkeys must be a tuple or list of nacl.signing.VerifyKeys')
 
         for vk in value:
             if not isinstance(vk, VerifyKey):
                 raise TypeError('vkeys must be a tuple or list of nacl.signing.VerifyKeys')
 
-        self['vkeys'] = value
+        self['vkeys'] = tuple(value)
 
     @property
     def nonce_commitments(self):

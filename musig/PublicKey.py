@@ -166,4 +166,4 @@ class PublicKey(AbstractPublicKey):
             if not isinstance(vk, VerifyKey):
                 raise TypeError('vkeys must be list or tuple of VerifyKeys')
 
-        self['vkeys'] = data
+        self['vkeys'] = tuple(data)
