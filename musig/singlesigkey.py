@@ -14,7 +14,7 @@ class SingleSigKey(AbstractSingleSigKey):
 
     def __init__(self, data: dict = None) -> None:
         """Initialize using a nacl.signing.SigningKey or deserialize.
-            Call with `{skey:SigningKey}` to create a new SingleSigKey.
+            Call with `{'skey':SigningKey}` to create a new SingleSigKey.
             Call with a dict containing json.loads output from a json.dumps
             serialization to restore an instance.
         """

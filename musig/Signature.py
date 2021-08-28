@@ -8,9 +8,9 @@ import nacl.bindings
 class Signature(AbstractSignature):
     """A class that sums PartialSignatures into a full Signature."""
     def __init__(self, data: dict = None) -> None:
-        """Initialize an instance. Initialize with `{parts: list_of_partial_sigs,
-            M: bytes, R: bytes}` to create a new signature from parts. Initialize
-            with `{s: bytes, R: bytes, M: bytes}` to restore a signature.
+        """Initialize an instance. Initialize with `{'parts': list_of_partial_sigs,
+            'M': bytes, 'R': bytes}` to create a new signature from parts. Initialize
+            with `{'s': bytes, 'R': bytes, 'M': bytes}` to restore a signature.
         """
         if not isinstance(data, dict):
             raise TypeError('data for initialization must be of type dict')

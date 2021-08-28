@@ -13,8 +13,8 @@ class PublicKey(AbstractPublicKey):
 
     def __init__(self, data: dict = None) -> None:
         """Initialize the instance using the given data.
-            Initialize with `{vkeys:list_of_vkeys}` to create a PublicKey from
-            participant keys. Initialize with `{gvkey:bytes}` to restore just
+            Initialize with `{'vkeys': list_of_vkeys}` to create a PublicKey from
+            participant keys. Initialize with `{'gvkey': bytes}` to restore just
             enough to verify signatures.
         """
         if data is None:
