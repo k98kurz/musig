@@ -13,7 +13,11 @@ class PublicKey(AbstractPublicKey):
     """
 
     def __init__(self, data: dict = None) -> None:
-        """Initialize the instance using the given data."""
+        """Initialize the instance using the given data.
+            Initialize with `{vkeys:list_of_vkeys}` to create a PublicKey from
+            participant keys. Initialize with `{gvkey:bytes}` to restore just
+            enough to verify signatures.
+        """
         if data is None:
             raise ValueError('cannot instantiate empty PublicKey')
 
@@ -79,7 +83,7 @@ class PublicKey(AbstractPublicKey):
         })
 
     def public(self) -> PublicKey:
-        """Create an instance with only the public/aggregate value."""
+        """Return a copy of the instance with only the public value (gvkey)."""
         return self.__class__({
             'gvkey': self.gvkey
         })
@@ -100,7 +104,7 @@ class PublicKey(AbstractPublicKey):
 
     @classmethod
     def aggregate_public_keys(cls, vkeys: list, key_set_L=None) -> bytes:
-        """Calculate the aggregate public key."""
+        """Calculate the aggregate public key from the participant keys."""
         # parse arguments
         vkeys = [vk if type(vk) is VerifyKey else VerifyKey(vk) for vk in vkeys]
         key_set_L = cls.encode_key_set(vkeys) if key_set_L is None else key_set_L
@@ -116,13 +120,18 @@ class PublicKey(AbstractPublicKey):
 
     @classmethod
     def pre_agg_key_transform(cls, vkey: VerifyKey, key_set_L: bytes) -> bytes:
-        """Transform the public key with the key set modifier."""
+        """Transform a participant VerifyKey prior to calculating the aggregate
+            public key. This is called by aggregate_public_keys on every
+            participant VerifyKey.
+        """
         a_i = H_agg(key_set_L, bytes(vkey))
         return nacl.bindings.crypto_scalarmult_ed25519_noclamp(a_i, bytes(vkey))
 
     @classmethod
     def encode_key_set(cls, vkeys: list) -> bytes:
-        """Sort the participant keys and hash them together."""
+        """Sort the participant keys into a deterministic order, then hash the
+            list to produce the keyset encoding (L).
+        """
         vkeys = [bytes(vk) if type(vk) is VerifyKey else vk for vk in vkeys]
         vkeys.sort()
         return H_small(*vkeys)
@@ -130,10 +139,12 @@ class PublicKey(AbstractPublicKey):
     # define some properties
     @property
     def L(self):
+        """The keyset encoding used for calculating partial signatures."""
         return self._L if hasattr(self, '_L') else None
 
     @L.setter
     def L(self, data: bytes):
+        """The keyset encoding used for calculating partial signatures."""
         if type(data) is not bytes:
             raise TypeError('L must be bytes of len 32')
         if len(data) != 32:
@@ -143,10 +154,12 @@ class PublicKey(AbstractPublicKey):
 
     @property
     def gvkey(self):
+        """The bytes of the aggregate key (denoted X in the MuSig paper)."""
         return self._gvkey if hasattr(self, '_gvkey') else None
 
     @gvkey.setter
     def gvkey(self, data: bytes):
+        """The bytes of the aggregate key (denoted X in the MuSig paper)."""
         if type(data) is not bytes:
             raise TypeError('gvkey must be bytes of len 32')
         if len(data) != 32:
@@ -156,10 +169,12 @@ class PublicKey(AbstractPublicKey):
 
     @property
     def vkeys(self):
+        """Tuple of untransformed participant VerifyKeys."""
         return self._vkeys if hasattr(self, '_vkeys') else tuple()
 
     @vkeys.setter
     def vkeys(self, data: list):
+        """Tuple of untransformed participant VerifyKeys."""
         if type(data) not in (list, tuple):
             raise TypeError('vkeys must be list or tuple of VerifyKeys')
         for vk in data:
