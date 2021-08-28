@@ -54,25 +54,27 @@ please submit the bug report by opening an issue in this repo.
 
 For 1-of-1 MuSig, use the SingleSigKey class as shown below.
 
-    from musig import SingleSigKey
-    from nacl.signing import SigningKey
-    from secrets import token_bytes
+```
+from musig import SingleSigKey
+from nacl.signing import SigningKey
+from secrets import token_bytes
 
-    # do something to load a seed for private key creation, e.g.
-    seed = token_bytes()
-    skey = SigningKey(seed)
-    ssk = SingleSigKey({'skey': skey})
+# do something to load a seed for private key creation, e.g.
+seed = token_bytes()
+skey = SigningKey(seed)
+ssk = SingleSigKey({'skey': skey})
 
-    # sign a message and distribute along with public key for verification
-    message = b'hello world'
-    sig = ssk.sign_message(message)
-    pubkey = ssk.vkey
+# sign a message and distribute along with public key for verification
+message = b'hello world'
+sig = ssk.sign_message(message)
+pubkey = ssk.vkey
 
-    # to verify the signature, use the pubkey
-    assert pubkey.verify(sig)
+# to verify the signature, use the pubkey
+assert pubkey.verify(sig)
 
-    # call str on any object to get the hex representation
-    # call repr on any object to get the jsonable dict representation
+# call str on any object to get the hex representation
+# call repr on any object to get the jsonable dict representation
+```
 
 ## n-of-n MuSig
 
