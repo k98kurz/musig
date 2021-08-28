@@ -15,8 +15,10 @@ rest of the SDK.
 - [x] Standardize and clean up serialization/deserialization.
 - [x] General code cleanup.
 - [x] Add 1-of-1 and 2-of-2 examples.
-- [ ] Full documentation.
+- [ ] MuSig documentation.
 - [ ] Add adaptor signature system.
+- [ ] Adaptor MuSig documentation.
+- [ ] Publish as a package.
 - [ ] Migrate final module back into Pycelium-SDK.
 
 # Installation
