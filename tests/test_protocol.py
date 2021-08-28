@@ -8,8 +8,8 @@ import musig
 import unittest
 
 
-class TestMuSigSomething(unittest.TestCase):
-    """Test suite for Something."""
+class TestMuSigProtocol(unittest.TestCase):
+    """Test suite for ProtocolState, ProtocolError, and ProtocolMessage."""
     @classmethod
     def setUpClass(cls):
         cls.seeds = [
@@ -80,8 +80,8 @@ class TestMuSigSomething(unittest.TestCase):
         pm = musig.ProtocolMessage.create(None, musig.ProtocolState.EMPTY, [])
         assert isinstance(pm, musig.ProtocolMessage)
         assert hasattr(pm, 'state') and pm.state is musig.ProtocolState.EMPTY
-        assert hasattr(pm, 'message') and type(pm.message) is list
-        assert pm.message == [b'']
+        assert hasattr(pm, 'message') and type(pm.message) is bytes
+        assert pm.message == b''
         assert hasattr(pm, 'session_id') and pm.session_id is None
 
         # add a signature
@@ -97,24 +97,25 @@ class TestMuSigSomething(unittest.TestCase):
         assert isinstance(deserialized, musig.ProtocolMessage)
         assert deserialized == pm
         assert hasattr(deserialized, 'state') and deserialized.state is musig.ProtocolState.EMPTY
-        assert hasattr(deserialized, 'message') and type(deserialized.message) is list
-        assert deserialized.message == [b'']
+        assert hasattr(deserialized, 'message') and type(deserialized.message) is bytes
+        assert deserialized.message == b''
         assert hasattr(deserialized, 'session_id') and deserialized.session_id is None
 
         # check deserialized message has valid signature
         assert deserialized.check_signature()
 
         # test json serialization and deserialization
-        serialized = dumps(pm)
+        serialized = dumps(deserialized)
         deserialized = musig.ProtocolMessage(loads(serialized))
-        assert deserialized == pm
+        assert deserialized.check_signature()
+        assert bytes(deserialized) == bytes(pm)
 
     def test_ProtocolMessage_for_INITIALIZED(self):
         pm = musig.ProtocolMessage.create(self.uuid, musig.ProtocolState.INITIALIZED, [])
         assert isinstance(pm, musig.ProtocolMessage)
         assert hasattr(pm, 'state') and pm.state is musig.ProtocolState.INITIALIZED
-        assert hasattr(pm, 'message') and type(pm.message) is list
-        assert pm.message == [b'']
+        assert hasattr(pm, 'message') and type(pm.message) is bytes
+        assert pm.message == b''
         assert hasattr(pm, 'session_id')
         assert isinstance(pm.session_id, UUID) and pm.session_id == self.uuid
 
@@ -138,8 +139,8 @@ class TestMuSigSomething(unittest.TestCase):
         pm = musig.ProtocolMessage.create(self.uuid, musig.ProtocolState.AWAITING_PARTICIPANT_KEY, [])
         assert isinstance(pm, musig.ProtocolMessage)
         assert hasattr(pm, 'state') and pm.state is musig.ProtocolState.AWAITING_PARTICIPANT_KEY
-        assert hasattr(pm, 'message') and type(pm.message) is list
-        assert pm.message == [b'']
+        assert hasattr(pm, 'message') and type(pm.message) is bytes
+        assert pm.message == b''
         assert hasattr(pm, 'session_id')
         assert isinstance(pm.session_id, UUID) and pm.session_id == self.uuid
 
@@ -154,6 +155,33 @@ class TestMuSigSomething(unittest.TestCase):
         deserialized = musig.ProtocolMessage.from_bytes(serialized)
         assert isinstance(deserialized, musig.ProtocolMessage)
         assert deserialized == pm
+
+        # check deserialized message has valid signature
+        assert deserialized.check_signature()
+
+    def test_ProtocolMessage_for_SENDING_PARTICIPANT_KEY(self):
+        # scenario: self.signing_keys[0] is sending its vkey
+        vkey = self.signing_keys[0].verify_key
+        pm = musig.ProtocolMessage.create(self.uuid, musig.ProtocolState.SENDING_PARTICIPANT_KEY, [vkey])
+        assert isinstance(pm, musig.ProtocolMessage)
+        assert hasattr(pm, 'state') and pm.state is musig.ProtocolState.SENDING_PARTICIPANT_KEY
+        assert hasattr(pm, 'message') and type(pm.message) is bytes
+        assert pm.message == bytes(vkey)
+        assert hasattr(pm, 'session_id')
+        assert isinstance(pm.session_id, UUID) and pm.session_id == self.uuid
+
+        # add a signature
+        pm.add_signature(self.signing_keys[0])
+        assert hasattr(pm, 'signature') and type(pm.signature) is NaclSignedMessage
+        assert hasattr(pm, 'vkey') and type(pm.vkey) is VerifyKey
+
+        # test serialization and deserialization
+        serialized = bytes(pm)
+        assert len(serialized) > 0
+        deserialized = musig.ProtocolMessage.from_bytes(serialized)
+        assert isinstance(deserialized, musig.ProtocolMessage)
+        assert deserialized == pm
+        assert deserialized.message == bytes(vkey)
 
         # check deserialized message has valid signature
         assert deserialized.check_signature()
@@ -164,8 +192,8 @@ class TestMuSigSomething(unittest.TestCase):
         pm = musig.ProtocolMessage.create(self.uuid, musig.ProtocolState.ACK_PARTICIPANT_KEY, [vkey])
         assert isinstance(pm, musig.ProtocolMessage)
         assert hasattr(pm, 'state') and pm.state is musig.ProtocolState.ACK_PARTICIPANT_KEY
-        assert hasattr(pm, 'message') and type(pm.message) is list
-        assert pm.message == [vkey]
+        assert hasattr(pm, 'message') and type(pm.message) is bytes
+        assert pm.message == bytes(vkey)
         assert hasattr(pm, 'session_id')
         assert isinstance(pm.session_id, UUID) and pm.session_id == self.uuid
 
@@ -174,8 +202,8 @@ class TestMuSigSomething(unittest.TestCase):
         pm = musig.ProtocolMessage.create(self.uuid, musig.ProtocolState.ACK_PARTICIPANT_KEY, vkeys)
         assert isinstance(pm, musig.ProtocolMessage)
         assert hasattr(pm, 'state') and pm.state is musig.ProtocolState.ACK_PARTICIPANT_KEY
-        assert hasattr(pm, 'message') and type(pm.message) is list
-        assert pm.message == vkeys
+        assert hasattr(pm, 'message') and type(pm.message) is bytes
+        assert pm.message == b''.join([bytes(vk) for vk in vkeys])
         assert hasattr(pm, 'session_id')
         assert isinstance(pm.session_id, UUID) and pm.session_id == self.uuid
 
@@ -190,7 +218,7 @@ class TestMuSigSomething(unittest.TestCase):
         deserialized = musig.ProtocolMessage.from_bytes(serialized)
         assert isinstance(deserialized, musig.ProtocolMessage)
         assert deserialized == pm
-        assert deserialized.message == vkeys
+        assert deserialized.message == b''.join([bytes(vk) for vk in vkeys])
 
         # check deserialized message has valid signature
         assert deserialized.check_signature()
@@ -201,8 +229,8 @@ class TestMuSigSomething(unittest.TestCase):
         pm = musig.ProtocolMessage.create(self.uuid, musig.ProtocolState.REJECT_PARTICIPANT_KEY, [vkey])
         assert isinstance(pm, musig.ProtocolMessage)
         assert hasattr(pm, 'state') and pm.state is musig.ProtocolState.REJECT_PARTICIPANT_KEY
-        assert hasattr(pm, 'message') and type(pm.message) is list
-        assert pm.message == [vkey]
+        assert hasattr(pm, 'message') and type(pm.message) is bytes
+        assert pm.message == bytes(vkey)
         assert hasattr(pm, 'session_id')
         assert isinstance(pm.session_id, UUID) and pm.session_id == self.uuid
 
@@ -211,8 +239,8 @@ class TestMuSigSomething(unittest.TestCase):
         pm = musig.ProtocolMessage.create(self.uuid, musig.ProtocolState.REJECT_PARTICIPANT_KEY, vkeys)
         assert isinstance(pm, musig.ProtocolMessage)
         assert hasattr(pm, 'state') and pm.state is musig.ProtocolState.REJECT_PARTICIPANT_KEY
-        assert hasattr(pm, 'message') and type(pm.message) is list
-        assert pm.message == vkeys
+        assert hasattr(pm, 'message') and type(pm.message) is bytes
+        assert pm.message == b''.join([bytes(vk) for vk in vkeys])
         assert hasattr(pm, 'session_id')
         assert isinstance(pm.session_id, UUID) and pm.session_id == self.uuid
 
@@ -222,30 +250,29 @@ class TestMuSigSomething(unittest.TestCase):
         pm = musig.ProtocolMessage.create(self.uuid, musig.ProtocolState.AWAITING_COMMITMENT, vkeys)
         assert isinstance(pm, musig.ProtocolMessage)
         assert hasattr(pm, 'state') and pm.state is musig.ProtocolState.AWAITING_COMMITMENT
-        assert hasattr(pm, 'message') and type(pm.message) is list
-        assert pm.message == vkeys
+        assert hasattr(pm, 'message') and type(pm.message) is bytes
+        assert pm.message == b''.join([bytes(vk) for vk in vkeys])
         assert hasattr(pm, 'session_id')
         assert isinstance(pm.session_id, UUID) and pm.session_id == self.uuid
 
     def test_ProtocolMessage_for_ACK_COMMITMENT(self):
         # scenario: self.signing_keys[0] is acknowledging receipt of a nonce commitment
-        nc1 = musig.NonceCommitment(musig.Nonce())
+        nc1 = musig.NonceCommitment.create(musig.Nonce())
         pm = musig.ProtocolMessage.create(self.uuid, musig.ProtocolState.ACK_COMMITMENT, [nc1])
         assert isinstance(pm, musig.ProtocolMessage)
         assert hasattr(pm, 'state') and pm.state is musig.ProtocolState.ACK_COMMITMENT
-        assert hasattr(pm, 'message') and type(pm.message) is list
-        assert pm.message == [nc1]
+        assert hasattr(pm, 'message') and type(pm.message) is bytes
+        assert pm.message == bytes(nc1)
         assert hasattr(pm, 'session_id')
         assert isinstance(pm.session_id, UUID) and pm.session_id == self.uuid
 
-
         # scenario: self.signing_keys[0] is acknowledging receipt of 2 nonce commitments
-        nc2 = musig.NonceCommitment(musig.Nonce())
+        nc2 = musig.NonceCommitment.create(musig.Nonce())
         pm = musig.ProtocolMessage.create(self.uuid, musig.ProtocolState.ACK_COMMITMENT, [nc1, nc2])
         assert isinstance(pm, musig.ProtocolMessage)
         assert hasattr(pm, 'state') and pm.state is musig.ProtocolState.ACK_COMMITMENT
-        assert hasattr(pm, 'message') and type(pm.message) is list
-        assert pm.message == [nc1, nc2]
+        assert hasattr(pm, 'message') and type(pm.message) is bytes
+        assert pm.message == b''.join([bytes(nc1), bytes(nc2)])
         assert hasattr(pm, 'session_id')
         assert isinstance(pm.session_id, UUID) and pm.session_id == self.uuid
 
@@ -261,8 +288,8 @@ class TestMuSigSomething(unittest.TestCase):
         assert isinstance(deserialized, musig.ProtocolMessage)
         assert deserialized == pm
         assert hasattr(deserialized, 'state') and deserialized.state is musig.ProtocolState.ACK_COMMITMENT
-        assert hasattr(deserialized, 'message') and type(deserialized.message) is list
-        assert deserialized.message == [nc1, nc2]
+        assert hasattr(deserialized, 'message') and type(deserialized.message) is bytes
+        assert deserialized.message == b''.join([bytes(nc1), bytes(nc2)])
         assert hasattr(deserialized, 'session_id')
         assert isinstance(deserialized.session_id, UUID) and deserialized.session_id == self.uuid
 
@@ -271,32 +298,32 @@ class TestMuSigSomething(unittest.TestCase):
 
     def test_ProtocolMessage_for_REJECT_COMMITMENT(self):
         # scenario: self.signing_keys[0] is rejecting a received nonce commitment
-        nc1 = musig.NonceCommitment(musig.Nonce())
+        nc1 = musig.NonceCommitment.create(musig.Nonce())
         pm = musig.ProtocolMessage.create(self.uuid, musig.ProtocolState.REJECT_COMMITMENT, [nc1])
         assert isinstance(pm, musig.ProtocolMessage)
         assert hasattr(pm, 'state') and pm.state is musig.ProtocolState.REJECT_COMMITMENT
-        assert hasattr(pm, 'message') and type(pm.message) is list
-        assert pm.message == [nc1]
+        assert hasattr(pm, 'message') and type(pm.message) is bytes
+        assert pm.message == bytes(nc1)
         assert hasattr(pm, 'session_id')
         assert isinstance(pm.session_id, UUID) and pm.session_id == self.uuid
 
         # scenario: self.signing_keys[0] is rejecting 2 received nonce commitments
-        nc2 = musig.NonceCommitment(musig.Nonce())
+        nc2 = musig.NonceCommitment.create(musig.Nonce())
         pm = musig.ProtocolMessage.create(self.uuid, musig.ProtocolState.REJECT_COMMITMENT, [nc1, nc2])
         assert isinstance(pm, musig.ProtocolMessage)
         assert hasattr(pm, 'state') and pm.state is musig.ProtocolState.REJECT_COMMITMENT
-        assert hasattr(pm, 'message') and type(pm.message) is list
-        assert pm.message == [nc1, nc2]
+        assert hasattr(pm, 'message') and type(pm.message) is bytes
+        assert pm.message == b''.join([bytes(nc1), bytes(nc2)])
         assert hasattr(pm, 'session_id')
         assert isinstance(pm.session_id, UUID) and pm.session_id == self.uuid
 
     def test_ProtocolMessage_for_SENDING_COMMITMENT(self):
-        nc = musig.NonceCommitment(musig.Nonce())
+        nc = musig.NonceCommitment.create(musig.Nonce())
         pm = musig.ProtocolMessage.create(self.uuid, musig.ProtocolState.SENDING_COMMITMENT, [nc])
         assert isinstance(pm, musig.ProtocolMessage)
         assert hasattr(pm, 'state') and pm.state is musig.ProtocolState.SENDING_COMMITMENT
-        assert hasattr(pm, 'message') and type(pm.message) is list
-        assert pm.message == [nc]
+        assert hasattr(pm, 'message') and type(pm.message) is bytes
+        assert pm.message == bytes(nc)
         assert hasattr(pm, 'session_id')
         assert isinstance(pm.session_id, UUID) and pm.session_id == self.uuid
 
@@ -304,8 +331,8 @@ class TestMuSigSomething(unittest.TestCase):
         pm = musig.ProtocolMessage.create(self.uuid, musig.ProtocolState.AWAITING_MESSAGE, [])
         assert isinstance(pm, musig.ProtocolMessage)
         assert hasattr(pm, 'state') and pm.state is musig.ProtocolState.AWAITING_MESSAGE
-        assert hasattr(pm, 'message') and type(pm.message) is list
-        assert pm.message == [b'']
+        assert hasattr(pm, 'message') and type(pm.message) is bytes
+        assert pm.message == b''
         assert hasattr(pm, 'session_id')
         assert isinstance(pm.session_id, UUID) and pm.session_id == self.uuid
 
@@ -314,8 +341,8 @@ class TestMuSigSomething(unittest.TestCase):
         pm = musig.ProtocolMessage.create(self.uuid, musig.ProtocolState.ACK_MESSAGE, [msg])
         assert isinstance(pm, musig.ProtocolMessage)
         assert hasattr(pm, 'state') and pm.state is musig.ProtocolState.ACK_MESSAGE
-        assert hasattr(pm, 'message') and type(pm.message) is list
-        assert pm.message == [msg]
+        assert hasattr(pm, 'message') and type(pm.message) is bytes
+        assert pm.message == msg
         assert hasattr(pm, 'session_id')
         assert isinstance(pm.session_id, UUID) and pm.session_id == self.uuid
 
@@ -326,8 +353,8 @@ class TestMuSigSomething(unittest.TestCase):
         assert isinstance(deserialized, musig.ProtocolMessage)
         assert deserialized == pm
         assert hasattr(deserialized, 'state') and deserialized.state is musig.ProtocolState.ACK_MESSAGE
-        assert hasattr(deserialized, 'message') and type(deserialized.message) is list
-        assert deserialized.message == [msg]
+        assert hasattr(deserialized, 'message') and type(deserialized.message) is bytes
+        assert deserialized.message == msg
         assert hasattr(deserialized, 'session_id')
         assert isinstance(deserialized.session_id, UUID) and deserialized.session_id == self.uuid
 
@@ -336,8 +363,8 @@ class TestMuSigSomething(unittest.TestCase):
         pm = musig.ProtocolMessage.create(self.uuid, musig.ProtocolState.REJECT_MESSAGE, [msg])
         assert isinstance(pm, musig.ProtocolMessage)
         assert hasattr(pm, 'state') and pm.state is musig.ProtocolState.REJECT_MESSAGE
-        assert hasattr(pm, 'message') and type(pm.message) is list
-        assert pm.message == [msg]
+        assert hasattr(pm, 'message') and type(pm.message) is bytes
+        assert pm.message == msg
         assert hasattr(pm, 'session_id')
         assert isinstance(pm.session_id, UUID) and pm.session_id == self.uuid
 
@@ -346,8 +373,8 @@ class TestMuSigSomething(unittest.TestCase):
         pm = musig.ProtocolMessage.create(self.uuid, musig.ProtocolState.SENDING_MESSAGE, [msg])
         assert isinstance(pm, musig.ProtocolMessage)
         assert hasattr(pm, 'state') and pm.state is musig.ProtocolState.SENDING_MESSAGE
-        assert hasattr(pm, 'message') and type(pm.message) is list
-        assert pm.message == [msg]
+        assert hasattr(pm, 'message') and type(pm.message) is bytes
+        assert pm.message == msg
         assert hasattr(pm, 'session_id')
         assert isinstance(pm.session_id, UUID) and pm.session_id == self.uuid
 
@@ -357,8 +384,8 @@ class TestMuSigSomething(unittest.TestCase):
         pm = musig.ProtocolMessage.create(self.uuid, musig.ProtocolState.AWAITING_NONCE, vkeys)
         assert isinstance(pm, musig.ProtocolMessage)
         assert hasattr(pm, 'state') and pm.state is musig.ProtocolState.AWAITING_NONCE
-        assert hasattr(pm, 'message') and type(pm.message) is list
-        assert pm.message == vkeys
+        assert hasattr(pm, 'message') and type(pm.message) is bytes
+        assert pm.message == b''.join([bytes(vk) for vk in vkeys])
         assert hasattr(pm, 'session_id')
         assert isinstance(pm.session_id, UUID) and pm.session_id == self.uuid
 
@@ -366,29 +393,29 @@ class TestMuSigSomething(unittest.TestCase):
         pm = musig.ProtocolMessage.create(self.uuid, musig.ProtocolState.AWAITING_NONCE, [self.signing_keys[1].verify_key])
         assert isinstance(pm, musig.ProtocolMessage)
         assert hasattr(pm, 'state') and pm.state is musig.ProtocolState.AWAITING_NONCE
-        assert hasattr(pm, 'message') and type(pm.message) is list
-        assert pm.message == [self.signing_keys[1].verify_key]
+        assert hasattr(pm, 'message') and type(pm.message) is bytes
+        assert pm.message == bytes(self.signing_keys[1].verify_key)
         assert hasattr(pm, 'session_id')
         assert isinstance(pm.session_id, UUID) and pm.session_id == self.uuid
 
     def test_ProtocolMessage_for_ACK_NONCE(self):
         # scenario: self.signing_keys[0] is acknowledging receipt of a nonce
-        n1 = musig.Nonce()
+        n1 = musig.Nonce().public()
         pm = musig.ProtocolMessage.create(self.uuid, musig.ProtocolState.ACK_NONCE, [n1])
         assert isinstance(pm, musig.ProtocolMessage)
         assert hasattr(pm, 'state') and pm.state is musig.ProtocolState.ACK_NONCE
-        assert hasattr(pm, 'message') and type(pm.message) is list
-        assert pm.message == [n1]
+        assert hasattr(pm, 'message') and type(pm.message) is bytes
+        assert pm.message == bytes(n1)
         assert hasattr(pm, 'session_id')
         assert isinstance(pm.session_id, UUID) and pm.session_id == self.uuid
 
         # scenario: self.signing_keys[0] is acknowledging receipt of nonces from others
-        n2 = musig.Nonce()
+        n2 = musig.Nonce().public()
         pm = musig.ProtocolMessage.create(self.uuid, musig.ProtocolState.ACK_NONCE, [n1, n2])
         assert isinstance(pm, musig.ProtocolMessage)
         assert hasattr(pm, 'state') and pm.state is musig.ProtocolState.ACK_NONCE
-        assert hasattr(pm, 'message') and type(pm.message) is list
-        assert pm.message == [n1, n2]
+        assert hasattr(pm, 'message') and type(pm.message) is bytes
+        assert pm.message == bytes(n1) + bytes(n2)
         assert hasattr(pm, 'session_id')
         assert isinstance(pm.session_id, UUID) and pm.session_id == self.uuid
 
@@ -397,15 +424,15 @@ class TestMuSigSomething(unittest.TestCase):
         assert hasattr(pm, 'signature') and type(pm.signature) is NaclSignedMessage
         assert hasattr(pm, 'vkey') and type(pm.vkey) is VerifyKey
 
-        # test serialization and deserialization
+        # test bytes serialization and deserialization
         serialized = bytes(pm)
         assert len(serialized) > 0
         deserialized = musig.ProtocolMessage.from_bytes(serialized)
         assert isinstance(deserialized, musig.ProtocolMessage)
         assert deserialized == pm
         assert hasattr(deserialized, 'state') and deserialized.state is musig.ProtocolState.ACK_NONCE
-        assert hasattr(deserialized, 'message') and type(deserialized.message) is list
-        assert deserialized.message == [n1, n2]
+        assert hasattr(deserialized, 'message') and type(deserialized.message) is bytes
+        assert deserialized.message == bytes(n1) + bytes(n2)
         assert hasattr(deserialized, 'session_id')
         assert isinstance(deserialized.session_id, UUID) and deserialized.session_id == self.uuid
 
@@ -423,22 +450,22 @@ class TestMuSigSomething(unittest.TestCase):
         assert deserialized.check_signature()
 
     def test_ProtocolMessage_for_REJECT_NONCE(self):
-        n = musig.Nonce()
+        n = musig.Nonce().public()
         pm = musig.ProtocolMessage.create(self.uuid, musig.ProtocolState.REJECT_NONCE, [n])
         assert isinstance(pm, musig.ProtocolMessage)
         assert hasattr(pm, 'state') and pm.state is musig.ProtocolState.REJECT_NONCE
-        assert hasattr(pm, 'message') and type(pm.message) is list
-        assert pm.message == [n]
+        assert hasattr(pm, 'message') and type(pm.message) is bytes
+        assert pm.message == bytes(n)
         assert hasattr(pm, 'session_id')
         assert isinstance(pm.session_id, UUID) and pm.session_id == self.uuid
 
     def test_ProtocolMessage_for_SENDING_NONCE(self):
-        n = musig.Nonce()
+        n = musig.Nonce().public()
         pm = musig.ProtocolMessage.create(self.uuid, musig.ProtocolState.SENDING_NONCE, [n])
         assert isinstance(pm, musig.ProtocolMessage)
         assert hasattr(pm, 'state') and pm.state is musig.ProtocolState.SENDING_NONCE
-        assert hasattr(pm, 'message') and type(pm.message) is list
-        assert pm.message == [n]
+        assert hasattr(pm, 'message') and type(pm.message) is bytes
+        assert pm.message == bytes(n)
         assert hasattr(pm, 'session_id')
         assert isinstance(pm.session_id, UUID) and pm.session_id == self.uuid
 
@@ -448,8 +475,8 @@ class TestMuSigSomething(unittest.TestCase):
         pm = musig.ProtocolMessage.create(self.uuid, musig.ProtocolState.AWAITING_PARTIAL_SIGNATURE, vkeys)
         assert isinstance(pm, musig.ProtocolMessage)
         assert hasattr(pm, 'state') and pm.state is musig.ProtocolState.AWAITING_PARTIAL_SIGNATURE
-        assert hasattr(pm, 'message') and type(pm.message) is list
-        assert pm.message == vkeys
+        assert hasattr(pm, 'message') and type(pm.message) is bytes
+        assert pm.message == b''.join([bytes(vk) for vk in vkeys])
         assert hasattr(pm, 'session_id')
         assert isinstance(pm.session_id, UUID) and pm.session_id == self.uuid
 
@@ -457,36 +484,36 @@ class TestMuSigSomething(unittest.TestCase):
         pm = musig.ProtocolMessage.create(self.uuid, musig.ProtocolState.AWAITING_PARTIAL_SIGNATURE, [self.signing_keys[1].verify_key])
         assert isinstance(pm, musig.ProtocolMessage)
         assert hasattr(pm, 'state') and pm.state is musig.ProtocolState.AWAITING_PARTIAL_SIGNATURE
-        assert hasattr(pm, 'message') and type(pm.message) is list
-        assert pm.message == [self.signing_keys[1].verify_key]
+        assert hasattr(pm, 'message') and type(pm.message) is bytes
+        assert pm.message == bytes(self.signing_keys[1].verify_key)
         assert hasattr(pm, 'session_id')
         assert isinstance(pm.session_id, UUID) and pm.session_id == self.uuid
 
     def test_ProtocolMessage_for_ACK_PARTIAL_SIGNATURE(self):
         # scenario: self.signing_keys[0] is acknowledging receipt of a partial signature
         nonce = musig.Nonce()
-        pkey = musig.PublicKey(self.verify_keys)
+        pkey = musig.PublicKey.create(self.verify_keys)
         skey = self.signing_keys[1]
-        sig = musig.PartialSignature.create(skey, nonce.r, pkey.L, skey.verify_key, nonce.R, b'hello world')
+        sig = musig.PartialSignature.create(skey, nonce.r, pkey.L, pkey, nonce.R, b'hello world')
         pm = musig.ProtocolMessage.create(self.uuid, musig.ProtocolState.ACK_PARTIAL_SIGNATURE, [sig])
         assert isinstance(pm, musig.ProtocolMessage)
         assert hasattr(pm, 'state') and pm.state is musig.ProtocolState.ACK_PARTIAL_SIGNATURE
-        assert hasattr(pm, 'message') and type(pm.message) is list
-        assert pm.message == [sig]
+        assert hasattr(pm, 'message') and type(pm.message) is bytes
+        assert pm.message == bytes(sig.public())
         assert hasattr(pm, 'session_id')
         assert isinstance(pm.session_id, UUID) and pm.session_id == self.uuid
 
     def test_ProtocolMessage_for_REJECT_PARTIAL_SIGNATURE(self):
         # scenario: self.signing_keys[0] is acknowledging receipt of a partial signature
         nonce = musig.Nonce()
-        pkey = musig.PublicKey(self.verify_keys)
+        pkey = musig.PublicKey.create(self.verify_keys)
         skey = self.signing_keys[1]
-        sig = musig.PartialSignature.create(skey, nonce.r, pkey.L, skey.verify_key, nonce.R, b'hello world')
+        sig = musig.PartialSignature.create(skey, nonce.r, pkey.L, pkey, nonce.R, b'hello world')
         pm = musig.ProtocolMessage.create(self.uuid, musig.ProtocolState.REJECT_PARTIAL_SIGNATURE, [sig])
         assert isinstance(pm, musig.ProtocolMessage)
         assert hasattr(pm, 'state') and pm.state is musig.ProtocolState.REJECT_PARTIAL_SIGNATURE
-        assert hasattr(pm, 'message') and type(pm.message) is list
-        assert pm.message == [sig]
+        assert hasattr(pm, 'message') and type(pm.message) is bytes
+        assert pm.message == bytes(sig.public())
         assert hasattr(pm, 'session_id')
         assert isinstance(pm.session_id, UUID) and pm.session_id == self.uuid
 
@@ -502,8 +529,8 @@ class TestMuSigSomething(unittest.TestCase):
         assert isinstance(deserialized, musig.ProtocolMessage)
         assert deserialized == pm
         assert hasattr(deserialized, 'state') and deserialized.state is musig.ProtocolState.REJECT_PARTIAL_SIGNATURE
-        assert hasattr(deserialized, 'message') and type(deserialized.message) is list
-        assert deserialized.message == [sig]
+        assert hasattr(deserialized, 'message') and type(deserialized.message) is bytes
+        assert deserialized.message == bytes(sig.public())
         assert hasattr(deserialized, 'session_id')
         assert isinstance(deserialized.session_id, UUID) and deserialized.session_id == self.uuid
 
@@ -523,25 +550,25 @@ class TestMuSigSomething(unittest.TestCase):
     def test_ProtocolMessage_for_SENDING_PARTIAL_SIGNATURE(self):
         # scenario: self.signing_keys[0] is sending a partial sig
         nonce = musig.Nonce()
-        pkey = musig.PublicKey(self.verify_keys)
+        pkey = musig.PublicKey.create(self.verify_keys)
         skey = self.signing_keys[0]
-        sig = musig.PartialSignature.create(skey, nonce.r, pkey.L, skey.verify_key, nonce.R, b'hello world')
+        sig = musig.PartialSignature.create(skey, nonce.r, pkey.L, pkey, nonce.R, b'hello world')
         pm = musig.ProtocolMessage.create(self.uuid, musig.ProtocolState.SENDING_PARTIAL_SIGNATURE, [sig])
         assert isinstance(pm, musig.ProtocolMessage)
         assert hasattr(pm, 'state') and pm.state is musig.ProtocolState.SENDING_PARTIAL_SIGNATURE
-        assert hasattr(pm, 'message') and type(pm.message) is list
-        assert pm.message == [sig]
+        assert hasattr(pm, 'message') and type(pm.message) is bytes
+        assert pm.message == bytes(sig.public())
         assert hasattr(pm, 'session_id')
         assert isinstance(pm.session_id, UUID) and pm.session_id == self.uuid
 
     def test_ProtocolMessage_for_COMPLETED(self):
-        ssk = musig.SingleSigKey(self.signing_keys[0])
+        ssk = musig.SingleSigKey({'skey': self.signing_keys[0]})
         sig = ssk.sign_message(b'hello world')
         pm = musig.ProtocolMessage.create(self.uuid, musig.ProtocolState.COMPLETED, [sig])
         assert isinstance(pm, musig.ProtocolMessage)
         assert hasattr(pm, 'state') and pm.state is musig.ProtocolState.COMPLETED
-        assert hasattr(pm, 'message') and type(pm.message) is list
-        assert pm.message == [sig]
+        assert hasattr(pm, 'message') and type(pm.message) is bytes
+        assert pm.message == bytes(sig)
         assert hasattr(pm, 'session_id')
         assert isinstance(pm.session_id, UUID) and pm.session_id == self.uuid
 
@@ -552,19 +579,19 @@ class TestMuSigSomething(unittest.TestCase):
         assert isinstance(deserialized, musig.ProtocolMessage)
         assert deserialized == pm
         assert hasattr(deserialized, 'state') and deserialized.state is musig.ProtocolState.COMPLETED
-        assert hasattr(deserialized, 'message') and type(deserialized.message) is list
-        assert deserialized.message == [sig]
+        assert hasattr(deserialized, 'message') and type(deserialized.message) is bytes
+        assert pm.message == bytes(sig)
         assert hasattr(deserialized, 'session_id')
         assert isinstance(deserialized.session_id, UUID) and deserialized.session_id == self.uuid
 
     def test_ProtocolMessage_for_ABORTED(self):
-        nc = musig.NonceCommitment(musig.Nonce())
+        nc = musig.NonceCommitment.create(musig.Nonce().public())
         err = musig.ProtocolError(f'invalid nonce commitment: {nc}', musig.ProtocolState.REJECT_COMMITMENT)
         pm = musig.ProtocolMessage.create(self.uuid, musig.ProtocolState.ABORTED, [err])
         assert isinstance(pm, musig.ProtocolMessage)
         assert hasattr(pm, 'state') and pm.state is musig.ProtocolState.ABORTED
-        assert hasattr(pm, 'message') and type(pm.message) is list
-        assert pm.message == [err]
+        assert hasattr(pm, 'message') and type(pm.message) is bytes
+        assert pm.message == bytes(err)
         assert hasattr(pm, 'session_id')
         assert isinstance(pm.session_id, UUID) and pm.session_id == self.uuid
 
@@ -580,8 +607,8 @@ class TestMuSigSomething(unittest.TestCase):
         assert isinstance(deserialized, musig.ProtocolMessage)
         assert deserialized == pm
         assert hasattr(deserialized, 'state') and deserialized.state is musig.ProtocolState.ABORTED
-        assert hasattr(deserialized, 'message') and type(deserialized.message) is list
-        assert deserialized.message == [err]
+        assert hasattr(deserialized, 'message') and type(deserialized.message) is bytes
+        assert pm.message == bytes(err)
         assert hasattr(deserialized, 'session_id')
         assert isinstance(deserialized.session_id, UUID) and deserialized.session_id == self.uuid
 

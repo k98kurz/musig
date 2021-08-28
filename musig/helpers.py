@@ -1,3 +1,9 @@
+"""A collection of helper functions that are used by many classes. Not all
+    calls to nacl.bindings functions are abstracted into helpers, but many are.
+    Each function has a short docblock explaining its purpose.
+"""
+
+
 from hashlib import new
 from nacl.signing import SigningKey, VerifyKey
 import nacl.bindings
@@ -82,4 +88,5 @@ def xor(b1: bytes, b2: bytes) -> bytes:
     return bytes(b3)
 
 def bytes_are_same(b1: bytes, b2: bytes) -> bool:
+    """Timing-attack safe bytes comparison."""
     return len(b1) == len(b2) and int.from_bytes(xor(b1, b2), 'little') == 0

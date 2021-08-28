@@ -1,127 +1,64 @@
 from __future__ import annotations
-from base64 import b64encode, b64decode
-from json import loads
-from musig.helpers import bytes_are_same
+from base64 import b64decode
 from musig.abstractclasses import AbstractSignature, AbstractPartialSignature
 from musig.partialsignature import PartialSignature
 import nacl.bindings
 
 
-class Signature(dict, AbstractSignature):
+class Signature(AbstractSignature):
     """A class that sums PartialSignatures into a full Signature."""
-    def __init__(self, data=None) -> None:
-        """Initialize an instance with params for the `create` method or
-            deserialize.
-            Call with `data=()` to create a new __class__.
-            Call with `data=str` or `data=bytes` to implicitly call `deserialize`.
-            Call with `data=dict` to instantiate with key:value definition, where
-            each value is b64 encoded.
+    def __init__(self, data: dict = None) -> None:
+        """Initialize an instance. Initialize with `{'parts': list_of_partial_sigs,
+            'M': bytes, 'R': bytes}` to create a new signature from parts. Initialize
+            with `{'s': bytes, 'R': bytes, 'M': bytes}` to restore a signature.
         """
-        if type(data) in (list, tuple) and len(data) == 3:
-            data = self.create(*data)
+        if not isinstance(data, dict):
+            raise TypeError('data for initialization must be of type dict')
 
-        if type(data) in (str, bytes):
-            data = self.deserialize(data)
+        if 'R' in data:
+            self.R = data['R'] if type(data['R']) is bytes else b64decode(data['R'])
+        if 'M' in data:
+            self.M = data['M'] if type(data['M']) is bytes else b64decode(data['M'])
+        if 's' in data:
+            self.s = data['s'] if type(data['s']) is bytes else b64decode(data['s'])
+        if 'parts' in data:
+            parts = [PartialSignature.from_bytes(p if type(p) is bytes else b64decode(p)) for p in data['parts']]
+            self.parts = parts
 
-        if isinstance(data, dict):
-            # restore from json loads result
-            super().__init__(data)
-            if 'R' in data:
-                self._R = b64decode(data['R'])
-            if 'M' in data:
-                self._M = b64decode(data['M'])
-            if 's' in data:
-                self._s = b64decode(data['s'])
-            if 'parts' in data:
-                self._parts = [PartialSignature(b64decode(p)) for p in data['parts']]
-        else:
-            raise ValueError('instantiation requires a list of values or deserialized dict')
-
-    def __str__(self) -> str:
-        """Result of calling str() on an instance."""
-        parts = [
-            self.R.hex(),
-            self.s.hex(),
-            self.M.hex(),
-            ':'.join([bytes(p).hex() for p in self.parts]),
-        ]
-        return '16.' + '.'.join(parts)
-
-    def __repr__(self) -> str:
-        """Result of calling repr() on an instance."""
-        parts = [
-            b64encode(self.R).decode(),
-            b64encode(self.s).decode(),
-            b64encode(self.M).decode(),
-            ':'.join([b64encode(bytes(p)).decode() for p in self.parts]),
-        ]
-        return '64.' + '.'.join(parts)
+        if len(self.parts) > 0 and self.R is not None and self.M is not None and self.s is None:
+            sig = self.create(self.R, self.M, self.parts)
+            self.s = sig.s
 
     def __bytes__(self) -> bytes:
-        """Result of calling bytes() on an instance."""
+        """Result of calling bytes() on an instance; i.e. serialize to bytes."""
         return self.R + self.s + self.M
 
-    def __hash__(self) -> int:
-        """Make class hashable for inclusion in sets."""
-        return hash(bytes(self))
-
-    def __eq__(self, other) -> bool:
-        """Enforce timing-attack safe comparison."""
-        if not isinstance(other, self.__class__):
-            return False
-        return bytes_are_same(bytes(self), bytes(other))
-
-    def serialize(self) -> str:
-        """Return a serialized representation of the instance."""
-        return repr(self)
-
     @classmethod
-    def deserialize(cls, data) -> Signature:
-        if isinstance(data, bytes):
-            if len(data) < 32*2+1:
-                raise ValueError('input bytes must have len >= 65')
-            R = data[:32]
-            s = data[32:64]
-            M = data[64:]
-            return cls({
-                'R': b64encode(R).decode(),
-                's': b64encode(s).decode(),
-                'M': b64encode(M).decode(),
-            })
-        elif isinstance(data, str):
-            # split the parts
-            parts = data.split('.')
-            if parts[0] != 'json' and len(parts) != 5:
-                raise ValueError('input str must have 5 parts delimited by .')
+    def from_bytes(cls, data: bytes) -> Signature:
+        """Deserializes output from __bytes__."""
+        if type(data) is not bytes:
+            raise TypeError('data must be bytes with length at least 65')
+        if len(data) < 65:
+            raise ValueError('data must be bytes with length at least 65')
 
-            if parts[0] == '16':
-                R = bytes.fromhex(parts[1])
-                s = bytes.fromhex(parts[2])
-                M = bytes.fromhex(parts[3])
-                parts = [bytes.fromhex(p) for p in parts[4].split(':')]
-            elif parts[0] == '64':
-                R = b64decode(parts[1])
-                s = b64decode(parts[2])
-                M = b64decode(parts[3])
-                parts = [b64decode(p) for p in parts[4].split(':')]
-            elif parts[0] == 'json':
-                return cls(loads('.'.join(parts[1:])))
+        R = data[:32]
+        s = data[32:64]
+        M = data[64:]
 
-            return cls({
-                'R': b64encode(R).decode(),
-                's': b64encode(s).decode(),
-                'M': b64encode(M).decode(),
-                'parts': [b64encode(p).decode() for p in parts],
-            })
-        else:
-            raise ValueError('unknown/invalid serialization')
+        return cls({
+            'R': R,
+            's': s,
+            'M': M
+        })
 
     @classmethod
     def create(cls, R: bytes, M: bytes, parts: list) -> dict:
-        """Create a new instance with the given params."""
+        """Create a new instance using the aggregate nonce point (R), the
+            message (M), and the list/tuple of partial signatures (scalars s_i).
+        """
         if type(R) is not bytes or \
-            len(R) != nacl.bindings.crypto_core_ed25519_BYTES or \
-            not nacl.bindings.crypto_core_ed25519_is_valid_point(R):
+                len(R) != nacl.bindings.crypto_core_ed25519_BYTES or \
+                not nacl.bindings.crypto_core_ed25519_is_valid_point(R):
             raise ValueError('R (aggregate nonce point) must be a valid ed25519 point')
 
         if type(parts) not in (list, tuple) or len(parts) < 1:
@@ -137,14 +74,67 @@ class Signature(dict, AbstractSignature):
             s = nacl.bindings.crypto_core_ed25519_scalar_add(s, parts[i].s_i)
 
         return cls({
-            'R': b64encode(R).decode(),
-            's': b64encode(s).decode(),
-            'M': b64encode(M).decode(),
-            'parts': [b64encode(bytes(p)).decode() for p in parts]
+            'R': R,
+            's': s,
+            'M': M,
+            'parts': [bytes(p) for p in parts]
         })
 
-    # properties
-    R = property(lambda self: self._R if hasattr(self, '_R') else None)
-    s = property(lambda self: self._s if hasattr(self, '_s') else None)
-    M = property(lambda self: self._M if hasattr(self, '_M') else None)
-    parts = property(lambda self: self._parts if hasattr(self, '_parts') else None)
+    @property
+    def R(self):
+        """Aggregate nonce point."""
+        return self._R if hasattr(self, '_R') else None
+
+    @R.setter
+    def R(self, data: bytes):
+        """Aggregate nonce point."""
+        if type(data) is not bytes:
+            raise TypeError('R must be bytes of len 32')
+        if len(data) != 32:
+            raise ValueError('R must be bytes of len 32')
+
+        self['R'] = data
+
+    @property
+    def s(self):
+        """Aggregate signature made from summing partial signatures."""
+        return self._s if hasattr(self, '_s') else None
+
+    @s.setter
+    def s(self, data: bytes):
+        """Aggregate signature made from summing partial signatures."""
+        if type(data) is not bytes:
+            raise TypeError('s must be bytes of len 32')
+        if len(data) != 32:
+            raise ValueError('s must be bytes of len 32')
+
+        self['s'] = data
+
+    @property
+    def M(self):
+        """Message to be signed."""
+        return self._M if hasattr(self, '_M') else None
+
+    @M.setter
+    def M(self, data: bytes):
+        """Message to be signed."""
+        if type(data) not in (bytes, str):
+            raise TypeError('M must be bytes or str')
+
+        self['M'] = data if type(data) is bytes else bytes(data, 'utf-8')
+
+    @property
+    def parts(self):
+        """Tuple of partial signatures summed together to create the signature."""
+        return self._parts if hasattr(self, '_parts') else tuple()
+
+    @parts.setter
+    def parts(self, data: list):
+        """Tuple of partial signatures summed together to create the signature."""
+        if type(data) not in (list, tuple):
+            raise TypeError('parts must be list or tuple of PartialSignatures')
+        for ps in data:
+            if not isinstance(ps, AbstractPartialSignature):
+                raise TypeError('parts must be list or tuple of PartialSignatures')
+
+        self['parts'] = tuple(data)
