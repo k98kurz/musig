@@ -51,7 +51,7 @@ class SigningSession(AbstractSigningSession):
                 seed = data['skey'] if type(data['skey']) is bytes else b64decode(data['skey'])
                 self.skey = SigningKey(seed)
 
-            if len(data.keys()) == 1:
+            if 'id' not in data:
                 # create an INITIALIZED session
                 self.id = uuid4()
                 self.vkeys = (self.skey.verify_key,)

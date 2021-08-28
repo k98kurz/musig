@@ -40,12 +40,21 @@ class TestMuSigSigningSession(unittest.TestCase):
         assert session.id is None
         assert session.number_of_participants is None
 
-    def test_SigningSession__init__creates_INITIALIZED_instance_with_skey_param(self):
+    def test_SigningSession__init__creates_INITIALIZED_instance_with_only_skey_param(self):
         session = musig.SigningSession({'skey': self.signing_keys[0]})
         assert isinstance(session, musig.SigningSession)
         assert hasattr(session, 'protocol_state')
         assert session.protocol_state is musig.ProtocolState.INITIALIZED
         assert isinstance(session.id, UUID)
+        assert len(session.vkeys) == 1
+
+    def test_SigningSession__init__creates_AWAITING_PARTICIPANT_KEY_with_skey_and_number_of_participants(self):
+        session = musig.SigningSession({'skey': self.signing_keys[0], 'number_of_participants': 2})
+        assert isinstance(session, musig.SigningSession)
+        assert hasattr(session, 'protocol_state')
+        assert session.protocol_state is musig.ProtocolState.AWAITING_PARTICIPANT_KEY
+        assert isinstance(session.id, UUID)
+        assert len(session.vkeys) == 1
 
     def test_SigningSession_instances_enter_state_AWAITING_PARTICIPANT_KEY_after_setting_number_of_participants(self):
         session = musig.SigningSession({'skey': self.signing_keys[0]})
