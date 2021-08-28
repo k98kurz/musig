@@ -13,9 +13,9 @@ class PartialSignature(AbstractPartialSignature):
     """
     def __init__(self, data: dict = None) -> None:
         """Initialize an instance with dict.
-            At a minimum data should include c_i and s_i keys with base64-encoded
-            values of 32 bytes each; key of R with base64-encoded value of 32
-            bytes is optional; key of M with base64-encoded value of bytes is
+            At a minimum data should include s_i key with base64-encoded value
+            of 32 bytes; keys of c_i and R with base64-encoded value of 32 bytes
+            each are optional; key of M with base64-encoded value of bytes is
             also optional.
         """
         if data is None:
@@ -41,6 +41,7 @@ class PartialSignature(AbstractPartialSignature):
 
     @classmethod
     def from_bytes(cls, data: bytes) -> PartialSignature:
+        """Deserializes output from __bytes__."""
         if type(data) is not bytes:
             raise TypeError('data must be bytes of len == 32 or >=96')
 
@@ -63,8 +64,11 @@ class PartialSignature(AbstractPartialSignature):
     @classmethod
     def create(cls, skey: SigningKey, r: bytes, L: bytes, X: AbstractPublicKey,
             R: bytes, M: bytes) -> dict:
-        """Create a partial signature from skey, r (nonce), L (key set encoding),
-            X (aggregate key), R (aggregate public nonce), and M (message).
+        """Create a new instance using the SigningKey of the participant (skey),
+            from which the private key will be derived (bytes(skey) returns the
+            seed); the private nonce of the participant (r); the keyset encoding
+            of the participants (L); the aggregate public key (X); the aggregate
+            public nonce point (R); and the message (M).
         """
         x_i = derive_key_from_seed(bytes(skey))
         c_i = derive_challenge(L, bytes(skey.verify_key), bytes(X.public()), R, M)
@@ -79,14 +83,17 @@ class PartialSignature(AbstractPartialSignature):
         })
 
     def public(self) -> PartialSignature:
+        """Return a copy of the instance with only the public value (s_i)."""
         return self.__class__({'s_i': self.s_i})
 
     @property
     def c_i(self):
+        """The non-interactive challenge for the participant."""
         return self._c_i if hasattr(self, '_c_i') else None
 
     @c_i.setter
     def c_i(self, data: bytes):
+        """The non-interactive challenge for the participant."""
         if type(data) is not bytes:
             raise TypeError('data must be bytes of len 32')
         if len(data) != 32:
@@ -96,10 +103,12 @@ class PartialSignature(AbstractPartialSignature):
 
     @property
     def s_i(self):
+        """The partial signature scalar."""
         return self._s_i if hasattr(self, '_s_i') else None
 
     @s_i.setter
     def s_i(self, data: bytes):
+        """The partial signature scalar."""
         if type(data) is not bytes:
             raise TypeError('data must be bytes of len 32')
         if len(data) != 32:
@@ -109,10 +118,12 @@ class PartialSignature(AbstractPartialSignature):
 
     @property
     def R(self):
+        """The aggregate nonce point."""
         return self._R if hasattr(self, '_R') else None
 
     @R.setter
     def R(self, data: bytes):
+        """The aggregate nonce point."""
         if type(data) is not bytes:
             raise TypeError('data must be bytes of len 32')
         if len(data) != 32:
@@ -122,10 +133,12 @@ class PartialSignature(AbstractPartialSignature):
 
     @property
     def M(self):
+        """The message to be signed."""
         return self._M if hasattr(self, '_M') else None
 
     @M.setter
     def M(self, data: bytes):
+        """The message to be signed."""
         if type(data) is not bytes:
             raise TypeError('data must be bytes')
 
