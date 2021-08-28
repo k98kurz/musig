@@ -13,7 +13,7 @@ rest of the SDK.
 - [x] Define abstract classes for type checking.
 - [x] Refactor all classes to be maximally SOLID.
 - [x] Standardize and clean up serialization/deserialization.
-- [ ] General code cleanup.
+- [x] General code cleanup.
 - [ ] Full documentation.
 - [ ] Add adaptor signature system.
 - [ ] Migrate final module back into Pycelium-SDK.
