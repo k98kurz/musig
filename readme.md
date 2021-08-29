@@ -15,7 +15,7 @@ rest of the SDK.
 - [x] Standardize and clean up serialization/deserialization.
 - [x] General code cleanup.
 - [x] Add 1-of-1 and 2-of-2 examples.
-- [ ] MuSig documentation.
+- [x] MuSig documentation.
 - [ ] Add adaptor signature system.
 - [ ] Adaptor MuSig documentation.
 - [ ] Publish as a package.
