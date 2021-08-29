@@ -81,7 +81,7 @@ assert pubkey.verify(sig)
 ## n-of-n MuSig
 
 For n-of-n MuSig, where n>1, use the SigningSession class as shown in the file
-`example.py`. In it, we are doing 2-of-2 MuSig for simplicity, but the process
+`example/2-of-2-musig.py`. In it, we are doing 2-of-2 MuSig for simplicity, but the process
 works with any number of participants (though it has not been optimized for
 absurdly large numbers of participants).
 
