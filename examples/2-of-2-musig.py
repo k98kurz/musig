@@ -1,6 +1,9 @@
 """2-of-2 example"""
 
 
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from musig.publickey import PublicKey
 from musig.partialsignature import PartialSignature
 from musig import SigningSession, ProtocolState, ProtocolMessage, ProtocolError, Nonce, NonceCommitment

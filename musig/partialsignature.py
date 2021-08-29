@@ -62,18 +62,18 @@ class PartialSignature(AbstractPartialSignature):
         return cls(new_data)
 
     @classmethod
-    def create(cls, skey: SigningKey, r: bytes, L: bytes, X: AbstractPublicKey,
+    def create(cls, skey: SigningKey, r_i: bytes, L: bytes, X: AbstractPublicKey,
             R: bytes, M: bytes) -> dict:
         """Create a new instance using the SigningKey of the participant (skey),
             from which the private key will be derived (bytes(skey) returns the
-            seed); the private nonce of the participant (r); the keyset encoding
+            seed); the private nonce of the participant (r_i); the keyset encoding
             of the participants (L); the aggregate public key (X); the aggregate
             public nonce point (R); and the message (M).
         """
         x_i = derive_key_from_seed(bytes(skey))
         c_i = derive_challenge(L, bytes(skey.verify_key), bytes(X.public()), R, M)
         s_i = nacl.bindings.crypto_core_ed25519_scalar_mul(c_i, x_i)
-        s_i = nacl.bindings.crypto_core_ed25519_scalar_add(r, s_i)
+        s_i = nacl.bindings.crypto_core_ed25519_scalar_add(r_i, s_i)
 
         return cls({
             'c_i': b64encode(c_i).decode(),
