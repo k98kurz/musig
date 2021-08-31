@@ -129,7 +129,7 @@ QED
 Supporting proofs:
     product(g^r_i) = g^sum(r_i):
         product(g^r_i)
-        (g^r_0 * g^r+1 * ...)
+        (g^r_0 * g^r_1 * ...)
         g^(r_0 + r_1 + ...)
         g^sum(r_i)
 
