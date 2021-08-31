@@ -14,16 +14,19 @@ their own ed25519 key pairs, they can create a MuSig aggregate key by simply
 sharing their public keys.
 
 This MuSig implementation uses pynacl for ed25519 signatures and mathematical
-method bindings.
+method bindings. One implementation detail which differs from the original
+specification is that instead of the keyset being a multi-set, it is simply a
+set (i.e. the same participant key cannot be added more than once). This change
+should make uses of this module easier to test and debug.
 
 # Mathematics
 
 The mathematics of MuSig are an extension of the mathematics of Schnorr
-signatures on the Twisted Edwards curve 25519. The original paper (first link
-in the references section below), is required reading. The main distinctions
-between MuSig and naive multi-Schnorr are the key transformation step; the
-exchange of nonce commitments before exchanging nonce points; and the partial
-signatures using special deterministic challenges to account for the key
+signatures, in this case on the Twisted Edwards Curve 25519. The original paper
+(first link in the references section below) is required reading. The main
+distinctions between MuSig and naive multi-Schnorr are the key transformation
+step; the exchange of nonce commitments before exchanging nonce points; and the
+partial signatures using special deterministic challenges to account for the key
 transformation.
 
 Important notes:
@@ -106,7 +109,7 @@ Given the functions:
 
 And the values:
     s = sum(s_i) = sum(a_i * c * x_i + r_i)
-    X = product(X_i ^ a_i)
+    X = product(X_i^a_i)
     R = product(g^r_i)
 
 It follows that:
