@@ -106,8 +106,8 @@ bytes and str, but it is not json compatible.
 The final thing to note is that to make the objects serializable with the json
 library, the classes inherit from the builtin dict class. To prevent misuse, the
 `__setitem__` method has been rewritten to allow only those keys that map to a
-defined property are allowed to be set with a value. For maximum json
-compatibility, values are serialized to base64 where possible.
+defined property to be set with a value. For maximum json compatibility, values
+(and names of dict values) are serialized to base64 where possible/appropriate.
 
 If you want to implement the abstract classes to build your own implementation
 using the helper functions, or if you need some special functionality that the
