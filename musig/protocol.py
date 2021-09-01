@@ -59,6 +59,10 @@ class ProtocolError(Exception):
         """Result of calling bytes() on instance; i.e. serialize to bytes."""
         return self.protocol_state.value.to_bytes(1, 'little') + bytes(self.message, 'utf-8')
 
+    def __str__(self) -> str:
+        """Result of calling str() on an instance."""
+        return self.protocol_state.name + ':' + self.message
+
     def __eq__(self, other) -> bool:
         """Timing-attack safe comparison."""
         if not isinstance(other, self.__class__):
@@ -76,6 +80,14 @@ class ProtocolError(Exception):
         """Deserializes output from __bytes__."""
         protocol_state = ProtocolState(bts[0])
         message = str(bts[1:], 'utf-8')
+        return cls(message, protocol_state)
+
+    @classmethod
+    def from_str(cls, s: str) -> ProtocolError:
+        """Deserializes output from __str__."""
+        parts = s.split(':')
+        protocol_state = ProtocolState[parts[0]]
+        message = ':'.join(parts[1:])
         return cls(message, protocol_state)
 
 

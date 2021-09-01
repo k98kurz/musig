@@ -45,6 +45,12 @@ class TestMuSigProtocol(unittest.TestCase):
             err1 = musig.ProtocolError.from_bytes(bytes(err0))
             assert err0 == err1
 
+    def test_ProtocolError_serializes_to_and_from_str_properly(self):
+        for state in musig.ProtocolState:
+            err0 = musig.ProtocolError('important information', state)
+            err1 = musig.ProtocolError.from_str(str(err0))
+            assert err0 == err1
+
     # ProtocolMessage tests
     def test_ProtocolMessage_is_a_class(self):
         assert hasattr(musig, 'ProtocolMessage')

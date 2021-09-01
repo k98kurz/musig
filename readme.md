@@ -101,7 +101,7 @@ and ProtocolState (which is an enum) can be serialized by passing it as an
 argument for `str()`, `bytes()`, or `json.dumps()`, and those outputs can be
 deserialized by calling `cls.from_str()`, `cls.from_bytes()`, and
 `cls(json.loads())` respectively. ProtocolError can be serialized to and from
-bytes, but it is not json compatible and cannot be deserialized from str.
+bytes and str, but it is not json compatible.
 
 The final thing to note is that to make the objects serializable with the json
 library, the classes inherit from the builtin dict class. To prevent misuse, the
