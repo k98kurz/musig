@@ -94,7 +94,7 @@ class PublicKey(AbstractPublicKey):
         R = sig.R
         M = sig.M
 
-        c = H_sig(X, R, M)
+        c = H_sig(R, X, M)
         gs = nacl.bindings.crypto_scalarmult_ed25519_base_noclamp(s)
         RXc = nacl.bindings.crypto_scalarmult_ed25519_noclamp(c, X)
         RXc = nacl.bindings.crypto_core_ed25519_add(R, RXc)

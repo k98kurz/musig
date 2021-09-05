@@ -7,7 +7,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 from musig.publickey import PublicKey
 from musig.partialsignature import PartialSignature
 from musig import SigningSession, ProtocolState, ProtocolMessage, ProtocolError, Nonce, NonceCommitment
-from nacl.signing import SigningKey
+from nacl.signing import SignedMessage, SigningKey, VerifyKey
 from secrets import token_bytes
 
 
@@ -142,6 +142,11 @@ def main():
     assert session.public_key.verify(signature)
     print(f'{signature=}')
     print(f'{str(signature)=}')
+
+    # compatible with ordinary Ed25519 signature verification
+    sig = SignedMessage(bytes(signature))
+    vkey = VerifyKey(bytes(session.public_key.public()))
+    assert vkey.verify(sig) == session.message
 
 
 if __name__ == '__main__':

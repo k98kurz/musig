@@ -68,16 +68,16 @@ def derive_key_from_seed(seed: bytes) -> bytes:
 def derive_challenge(L: bytes, X_i: bytes, X: bytes, R: bytes, M: bytes) -> bytes:
     """Derive the challenge used for making a partial signature."""
     a_i = H_agg(L, X_i)
-    c = H_sig(X, R, M)
+    c = H_sig(R, X, M)
     return clamp_scalar(nacl.bindings.crypto_core_ed25519_scalar_mul(a_i, c))
 
 def H_agg(L: bytes, X_i: bytes) -> bytes:
     """The hash used for aggregating keys."""
     return clamp_scalar(H_small(L, X_i))
 
-def H_sig(X: bytes, R: bytes, M: bytes) -> bytes:
+def H_sig(R: bytes, X: bytes, M: bytes) -> bytes:
     """The hash used to derive the challenge used in signing and verifying."""
-    return clamp_scalar(H_small(X, R, M))
+    return clamp_scalar(H_small(R, X, M))
 
 def xor(b1: bytes, b2: bytes) -> bytes:
     """XOR two equal-length byte strings together."""
