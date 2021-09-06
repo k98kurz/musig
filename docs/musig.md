@@ -67,7 +67,7 @@ Using the keyset encoding, each participant key can be transformed, and the
 transformed keys can be summed together into the aggregate key (`X`):
 ```
 a_i = H_agg(<L>, X_i)
-X = sum(X_i ^ a_i)
+X = product(X_i ^ a_i)
 ```
 
 The next step is to exchange nonce commitments. A nonce is a clamped random
@@ -86,7 +86,7 @@ has been violated. The nonce points are summed together into an aggregate nonce
 (`R`), and that is used to create the partial signatures for each participant
 (`s_i`) are created from their key (`skey`) and a challenge (`c_i`):
 ```
-R = sum(R_i)
+R = product(R_i)
 x_i = derive_key_from_seed(skey)
 X_i = g^x_i
 a_i = H_agg(<L>, X_i)
@@ -109,8 +109,8 @@ assert g^s == R * X^c
 Proof:
 ```
 Given the functions:
-    sum(x_i) = (x_0 + x_1 + ... + x_n)
-    product(x_i) = (x_0 * x_1 * ... * x_n)
+    sum(x_i) = (x_1 + ... + x_n)
+    product(x_i) = (x_1 * ... * x_n)
 
 And the values:
     s = sum(s_i) = sum(a_i * c * x_i + r_i)
@@ -119,14 +119,11 @@ And the values:
 
 It follows that:
     g^s = R * X^c
-    g^(sum(a_i * c * x_i + r_i)) = product(g^r_i) * product(X_i^a_i)^c
-    g^(c * sum(a_i * x_i + r_i)) = product(g^r_i) * product((g^x_i)^a_i * c)
-    g^c * g^sum(a_i * x_i + r_i) = product(g^r_i) * product(g^(x_i * a_i * c))
-    g^c * g^sum(a_i * x_i + r_i) = product(g^r_i) * product(g^x_i * g^a_i * g^c)
-    g^c * g^sum(a_i * x_i + r_i) = product(g^r_i) * g^c * product(g^x_i * g^a_i)
-    g^c * g^sum(a_i * x_i + r_i) = g^c * product(g^r_i) * product(g^x_i * g^a_i)
-    g^c * g^sum(a_i * x_i + r_i) = g^c * g^sum(r_i) * g^sum(x_i * a_i)
-    g^c * g^sum(a_i * x_i + r_i) = g^c * g^sum(r_i + x_i * a_i)
+    g^(sum(a_i * c * x_i + r_i)) = product(g^r_i) * product(X_i^(a_i * c))
+    g^sum(a_i * c * x_i) * g^sum(r_i) = product(g^r_i) * product(X_i^(a_i * c))
+    g^(c * sum(a_i * x_i)) * g^sum(r_i) = product(g^r_i) * product(g^(x_i * a_i * c))
+    g^(c * sum(a_i * x_i)) * g^sum(r_i) = g^sum(r_i) * g^sum(x_i * a_i * c)
+    g^(c * sum(a_i * x_i)) * g^sum(r_i) = g^(c * sum(x_i * a_i)) * g^sum(r_i)
 
 QED
 
@@ -137,12 +134,6 @@ Supporting proofs:
         (g^r_0 * g^r_1 * ...)
         g^(r_0 + r_1 + ...)
         g^sum(r_i)
-
-    product(g^x_i * g^a_i) = g^sum(x_i * a_i):
-        product(g^x_i * g^a_i)
-        (g^x_0 * g^a_0 * g^x_1 * g^a_1 * ...)
-        g^(x_0 * a_0 * ...)
-        g^sum(x_i * a_i)
 
     g^sum(r_i) * g^sum(x_i * a_i) = g^sum(r_i + x_i * a_i):
         g^sum(r_i) * g^sum(x_i * a_i)

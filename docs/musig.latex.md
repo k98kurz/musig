@@ -65,7 +65,7 @@ keyset encoding because angle brackets cannot be used in variable names.)
 Using the keyset encoding, each participant key can be transformed, and the
 transformed keys can be summed together into the aggregate key $\tilde X$:
 $$ a_i = H_{agg}(\langle L \rangle, X_i) $$
-$$ X = \sum_{i=1}^nX_i^{a_i} $$
+$$ X = \prod_{i=1}^nX_i^{a_i} $$
 
 The next step is to exchange nonce commitments. A nonce is a clamped random
 scalar $r_i$ and an associated point $R_i$ created by "exponentiation" of the
@@ -83,7 +83,7 @@ has been violated. The nonce points are summed together into an aggregate nonce
 $R$, and that is used to create the partial signatures for each participant
 $s_i$ are created from their key $skey$ and a challenge $c_i$:
 
-$$ R = sum(R_i) $$
+$$ R = \prod_{i=1}^nR_i $$
 $$ x_i = derive\_key\_from\_seed(skey)$$
 $$ X_i = g^x_i $$
 $$ a_i = H_{agg}(\langle L \rangle, X_i) $$
@@ -103,29 +103,37 @@ $$ g^s = R \cdot \tilde X^c $$
 Proof:
 
 Given the values:
-$$ s = \sum_{i=1}^ns_i = a_1 \cdot c \cdot x_1 + r_1 + ... + a_n \cdot c \cdot x_n + r_n $$
+$$ s = \sum_{i=1}^ns_i = \sum_{i=1}^n(a_i \cdot c \cdot x_i + r_i) $$
 $$ \tilde X = \prod_{i=1}^nX_i^{a_i} $$
 $$ R = \prod_{i=1}^ng^{r_i} $$
 
 It follows that:
 $$ g^s = R \cdot \tilde X^c $$
 
-$$ g^{\sum_{i=1}^na_i \cdot c \cdot x_i + r_i} = \prod_{i=1}^ng^{r_i} \cdot \prod_{i=1}^nX_i^{a_i\cdot c} $$
+$$
+g^{\sum_{i=1}^na_i \cdot c \cdot x_i + r_i}
+= \prod_{i=1}^ng^{r_i} \cdot \prod_{i=1}^nX_i^{a_i\cdot c}
+$$
 
-$$ g^{c \cdot \sum_{i=1}^na_i \cdot x_i + r_i} = \prod_{i=1}^ng^{r_i} \cdot \prod_{i=1}^ng^{x_i \cdot a_i \cdot c} $$
+$$
+g^{\sum_{i=1}^na_i \cdot c \cdot x_i} g^{\sum_{i=1}^nr_i}
+= \prod_{i=1}^ng^{r_i} \cdot \prod_{i=1}^nX_i^{a_i\cdot c}
+$$
 
-$$ g^c \cdot g^{\sum_{i=1}^na_i \cdot x_i + r_i} = \prod_{i=1}^ng^{r_i} \cdot \prod_{i=1}^ng^{x_i \cdot a_i \cdot c} $$
+$$
+g^{c \cdot \sum_{i=1}^na_i \cdot x_i} g^{\sum_{i=1}^nr_i}
+= \prod_{i=1}^ng^{r_i} \cdot \prod_{i=1}^ng^{x_i \cdot a_i \cdot c}
+$$
 
-$$ g^c \cdot g^{\sum_{i=1}^na_i \cdot x_i + r_i} = \prod_{i=1}^ng^{r_i} \cdot \prod_{i=1}^n[g^{x_i} \cdot g^{a_i} \cdot g^c] $$
+$$
+g^{c \cdot \sum_{i=1}^na_i \cdot x_i} g^{\sum_{i=1}^nr_i}
+= g^{\sum_{i=1}^nr_i} \cdot g^{\sum_{i=1}^nx_i \cdot a_i \cdot c}
+$$
 
-$$ g^c \cdot g^{\sum_{i=1}^na_i \cdot x_i + r_i} = \prod_{i=1}^n[g^{r_i}] \cdot g^c \cdot \prod_{i=1}^n[g^{x_i} \cdot g^{a_i}] $$
-
-$$ g^c \cdot g^{\sum_{i=1}^na_i \cdot x_i + r_i} = g^c \cdot \prod_{i=1}^ng^{r_i} \cdot \prod_{i=1}^n[g^{x_i} \cdot g^{a_i}] $$
-
-$$ g^c \cdot g^{\sum_{i=1}^na_i \cdot x_i + r_i} = g^c \cdot g^{\sum_{i=1}^nr_i} \cdot g^{\sum_{i=1}^nx_i \cdot a_i} $$
-
-$$ g^c \cdot g^{\sum_{i=1}^na_i \cdot x_i + r_i} = g^c \cdot g^{\sum_{i=1}^nr_i + x_i \cdot a_i} $$
-
+$$
+g^{c \cdot \sum_{i=1}^na_i \cdot x_i} g^{\sum_{i=1}^nr_i}
+= g^{c \cdot \sum_{i=1}^na_i \cdot x_i} g^{\sum_{i=1}^nr_i}
+$$
 
 QED
 
@@ -139,16 +147,6 @@ $ \prod_{i=1}^ng^{r_i} $
 $ = g^{r_1} \cdot ... \cdot g^{r_n} $
 $ = g^{r_1 + ... + r_n} $
 $ = g^{\sum_{i=1}^nr_i} $
-
-<br>
-
-$ \prod_{i=1}^n[g^{x_i} \cdot g^{a_i}] = g^{\sum_{i=1}^nx_i \cdot a_i} $:
-
-
-$ \prod_{i=1}^n[g^{x_i} \cdot g^{a_i}] $
-$ = g^{x_1} \cdot g^{a_1} \cdot ... \cdot g^{x_n} \cdot g^{a_n} $
-$ = g^{x_1 \cdot a_1 \cdot ... \cdot x_n \cdot a_n} $
-$ = g^{\prod_{i=1}^nx_i \cdot a_i} $
 
 <br>
 
