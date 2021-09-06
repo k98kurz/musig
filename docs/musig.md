@@ -51,6 +51,11 @@ is not exactly accurate:
 - Any var with `_i` is a member of a set and is unique for each participant,
 whereas any var without `_i` is a singleton consistent for every participant. In
 the proof section, `_i` is used to denote a set.
+- The paper uses the nomenclature `H_sig(X, R, M)`, but this seems to be an
+error. When `H_sig(R, X, M)` is used instead, the signatures become compatible
+with the underlying pynacl ed25519 verification. See the third reference for the
+original ed25519 specification which shows this to be the case (though they
+used `A = aG` for the key pair nomenclature).
 
 The first thing that occurs is the exchange of keys between participants. Once
 all participants have all the public keys, the keys are ordered deterministically
@@ -85,7 +90,7 @@ R = sum(R_i)
 x_i = derive_key_from_seed(skey)
 X_i = g^x_i
 a_i = H_agg(<L>, X_i)
-c = H_sig(X, R, M)
+c = H_sig(R, X, M)
 s_i = a_i * c * x_i + r_i
 ```
 
@@ -97,7 +102,7 @@ s = sum(s_i)
 The full MuSig signature is then `s, R`. This can be verified with the aggregate
 public key as follows:
 ```
-c = H_sig(X, R, M)
+c = H_sig(R, X, M)
 assert g^s == R * X^c
 ```
 
@@ -270,3 +275,5 @@ the path is changed to allow import from that directory. There is also a short
 
 - [Simple Schnorr Multi-Signatures with Applications to Bitcoin](https://eprint.iacr.org/2018/068.pdf)
 - [Insecure Shortcuts in MuSig](https://medium.com/blockstream/insecure-shortcuts-in-musig-2ad0d38a97da)
+- [High-speed high-security signatures](https://ed25519.cr.yp.to/ed25519-20110926.pdf)
+    - Section 4 Signing messages, page 12: `S = (r + H(R, A, M)a) mod l`
