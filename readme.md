@@ -54,36 +54,18 @@ please submit the bug report by opening an issue in this repo.
 
 ## 1-of-1 MuSig
 
-For 1-of-1 MuSig, use the SingleSigKey class as shown below.
-
-```
-from musig import SingleSigKey
-from nacl.signing import SigningKey
-from secrets import token_bytes
-
-# do something to load a seed for private key creation, e.g.
-seed = token_bytes()
-skey = SigningKey(seed)
-ssk = SingleSigKey({'skey': skey})
-
-# sign a message and distribute along with public key for verification
-message = b'hello world'
-sig = ssk.sign_message(message)
-pubkey = ssk.vkey
-
-# to verify the signature, use the pubkey
-assert pubkey.verify(sig)
-
-# call str on any object to get the hex representation
-# call repr on any object to get the jsonable dict representation
-```
+For 1-of-1 MuSig, use the SingleSigKey class as shown in
+`examples/1-of-1-musig.py`. This is unlikely to be useful in practice, but it is
+hopefully helpful in making the process more understandable -- n-of-n MuSig
+requires a minimum of 3 communication rounds, so the 1-of-1 SingleSigKey exists
+to demonstrate the underlying maths in an uncomplicated way.
 
 ## n-of-n MuSig
 
 For n-of-n MuSig, where n>1, use the SigningSession class as shown in the file
-`example/2-of-2-musig.py`. In it, we are doing 2-of-2 MuSig for simplicity, but the process
-works with any number of participants (though it has not been optimized for
-absurdly large numbers of participants).
+`examples/2-of-2-musig.py`. In it, we are doing 2-of-2 MuSig for simplicity, but
+the process works with any number of participants (though it has not been
+optimized for absurdly large numbers of participants).
 
 ## Usage notes
 
