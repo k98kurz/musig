@@ -53,12 +53,12 @@ class Nonce(AbstractNonce):
             r = data[1:]
             R = nacl.bindings.crypto_scalarmult_ed25519_base_noclamp(r)
             return cls({
-                'r': b64encode(r).decode(),
-                'R': b64encode(R).decode()
+                'r': r,
+                'R': R
             })
         else:
             # restore partial Nonce with just the public point.
-            return cls({'R': b64encode(data).decode()})
+            return cls({'R': data})
 
     def __add__(self, other: Nonce) -> Nonce:
         """Result of the + operation between two Nonces."""

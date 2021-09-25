@@ -57,7 +57,7 @@ class NonceCommitment(AbstractNonceCommitment):
         if len(data) != 32:
             raise ValueError('data must be bytes of len 32')
 
-        return cls({'HR': b64encode(data).decode()})
+        return cls({'HR': data})
 
     @property
     def HR(self):

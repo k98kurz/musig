@@ -49,15 +49,15 @@ class PartialSignature(AbstractPartialSignature):
             raise ValueError('data must be bytes of len == 32 or >=96')
 
         new_data = {
-            's_i': b64encode(data[:32]).decode()
+            's_i': data[:32]
         }
 
         if len(data) >= 96:
-            new_data['c_i'] = b64encode(data[32:64]).decode()
-            new_data['R'] = b64encode(data[64:96]).decode()
+            new_data['c_i'] = data[32:64]
+            new_data['R'] = data[64:96]
 
         if len(data) > 96:
-            new_data['M'] = b64encode(data[96:]).decode()
+            new_data['M'] = data[96:]
 
         return cls(new_data)
 
@@ -76,10 +76,10 @@ class PartialSignature(AbstractPartialSignature):
         s_i = nacl.bindings.crypto_core_ed25519_scalar_add(r_i, s_i)
 
         return cls({
-            'c_i': b64encode(c_i).decode(),
-            's_i': b64encode(s_i).decode(),
-            'R': b64encode(R).decode(),
-            'M': b64encode(M).decode(),
+            'c_i': c_i,
+            's_i': s_i,
+            'R': R,
+            'M': M,
         })
 
     def public(self) -> PartialSignature:

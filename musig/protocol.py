@@ -227,7 +227,6 @@ class ProtocolMessage(AbstractProtocolMessage):
         param = {
             'state': state.name,
             'message': message
-            # 'message': '.'.join([b64encode(m).decode() for m in message])
         }
 
         if session_id is not None:
