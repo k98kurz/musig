@@ -17,7 +17,7 @@ setup(
     description='Simple-to-use package implementing a MuSig multi-sig protocol.',
     long_description=readme,
     license=license,
-    packages=find_packages(exclude=('tests', 'docs')),
+    packages=find_packages(exclude=('tests', 'docs', 'examples')),
     install_requires=requirements,
     python_requires='>=3.6.0',
     classifiers=[
