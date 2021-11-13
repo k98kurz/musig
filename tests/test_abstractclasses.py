@@ -116,10 +116,11 @@ class TestMuSigAbstractClasses(unittest.TestCase):
     """Test suite for some abstract classes.
         The purpose of this suite is to test the functionality written in the
         abstract classes themselves, not to test that every abstract class
-        can be implemented properly. Everything except ProtocolState in the
-        module derives from ExtendedDict, so the primary purpose is to test the
-        features built into that class and show how to implement derivative
-        classes properly through the example of AbstractNonceExample.
+        can be implemented properly. Everything in the module except
+        ProtocolState and ProtocolError derives from ExtendedDict, so the
+        primary purpose is to test the features built into that class and show
+        how to implement derivative classes properly through the examples of
+        ExtendedDictExample and AbstractNonceExample.
     """
     def test_class_deriving_from_ExtendedDict_cannot_set_nonproperty_keys(self):
         t = ExtendedDictExample()
