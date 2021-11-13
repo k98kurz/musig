@@ -21,6 +21,7 @@ setup(
     install_requires=requirements,
     python_requires='>=3.6.0',
     classifiers=[
+        "Programming Language :: Python :: 3",
         "Development Status :: 2 - Pre-Alpha",
         "Topic :: Security :: Cryptography",
         "License :: OSI Approved :: ISC License (ISCL)",
