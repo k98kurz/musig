@@ -81,11 +81,11 @@ upon a message to sign $m$, and then exchange their nonce points $R_i$. Each
 nonce point must be valid for that participant's commitment, else the protocol
 has been violated. The nonce points are summed together into an aggregate nonce
 $R$, and that is used to create the partial signatures for each participant
-$s_i$ are created from their key $skey$ and a challenge $c_i$:
+$s_i$, which are created from their key $skey_i$ and a challenge $c_i$:
 
 $$ R = \prod_{i=1}^nR_i $$
-$$ x_i = derive\_key\_from\_seed(skey)$$
-$$ X_i = g^x_i $$
+$$ x_i = derive\_key\_from\_seed(skey_i)$$
+$$ X_i = g^{x_i} $$
 $$ a_i = H_{agg}(\langle L \rangle, X_i) $$
 $$ c = H_{sig}(R, \tilde X, m) $$
 $$ s_i = a_i \cdot c \cdot x_i + r_i $$
@@ -141,21 +141,21 @@ QED
 
 Supporting proofs:
 
-$ \prod_{i=1}^ng^{r_i} = g^{\sum_{i=1}^nr_i} $:
+$\prod_{i=1}^ng^{r_i} = g^{\sum_{i=1}^nr_i}$:
 
-$ \prod_{i=1}^ng^{r_i} $
-$ = g^{r_1} \cdot ... \cdot g^{r_n} $
-$ = g^{r_1 + ... + r_n} $
-$ = g^{\sum_{i=1}^nr_i} $
+$\prod_{i=1}^ng^{r_i}$
+$= g^{r_1} \cdot ... \cdot g^{r_n}$
+$= g^{r_1 + ... + r_n}$
+$= g^{\sum_{i=1}^nr_i}$
 
 <br>
 
-$ g^{\sum_{i=1}^nr_i} \cdot g^{\sum_{i=1}^nx_i \cdot a_i} = g^{\sum_{i=1}^nr_i + x_i \cdot a_i} $:
+$g^{\sum_{i=1}^nr_i} \cdot g^{\sum_{i=1}^nx_i \cdot a_i} = g^{\sum_{i=1}^nr_i + x_i \cdot a_i}$:
 
-$ g^{\sum_{i=1}^nr_i} \cdot g^{\sum_{i=1}^nx_i \cdot a_i} $
-$ = g^{r_1 + ... + r_n} \cdot g^{x_1 \cdot a_1 + ... + x_n \cdot a_n} $
-$ = g^{r_1 + x_1 \cdot a_1 + ... + r_n + x_n \cdot a_n} $
-$ = g^{\sum_{i=1}^nr_i + x_i \cdot a_i} $
+$g^{\sum_{i=1}^nr_i} \cdot g^{\sum_{i=1}^nx_i \cdot a_i}$
+$= g^{r_1 + ... + r_n} \cdot g^{x_1 \cdot a_1 + ... + x_n \cdot a_n}$
+$= g^{r_1 + x_1 \cdot a_1 + ... + r_n + x_n \cdot a_n}$
+$= g^{\sum_{i=1}^nr_i + x_i \cdot a_i}$
 
 
 # Safety Considerations for the Protocol
