@@ -29,9 +29,11 @@ to clone the repo and then run the following from within the root directory
 
 ```
 python -m venv venv/
-source venv/Scripts/activate
+source venv/bin/activate
 pip install -r requirements.txt
 ```
+
+On Windows, you may have to run `source venv/Scripts/activate`.
 
 These instructions will change once development is complete and the module is
 published as a package.
