@@ -64,7 +64,9 @@ keyset encoding because angle brackets cannot be used in variable names.)
 
 Using the keyset encoding, each participant key can be transformed, and the
 transformed keys can be summed together into the aggregate key $\tilde X$:
+
 $$ a_i = H_{agg}(\langle L \rangle, X_i) $$
+
 $$ X = \prod_{i=1}^nX_i^{a_i} $$
 
 The next step is to exchange nonce commitments. A nonce is a clamped random
@@ -84,30 +86,42 @@ $R$, and that is used to create the partial signatures for each participant
 $s_i$, which are created from their key $skey_i$ and a challenge $c_i$:
 
 $$ R = \prod_{i=1}^nR_i $$
+
 $$ x_i = derive\_key\_from\_seed(skey_i)$$
+
 $$ X_i = g^{x_i} $$
+
 $$ a_i = H_{agg}(\langle L \rangle, X_i) $$
+
 $$ c = H_{sig}(R, \tilde X, m) $$
+
 $$ s_i = a_i \cdot c \cdot x_i + r_i $$
 
 
 The aggregate signature (`s`) is then computed by summing the partial sigs:
+
 $$ s = \sum_{i=1}^ns_i $$
 
 The full MuSig signature is then $(R, s)$. This can be verified with the aggregate
 public key as follows:
+
 $$ c = H_{sig}(R, \tilde X, m) $$
+
 $$ g^s = R \cdot \tilde X^c $$
 
 
 Proof:
 
 Given the values:
+
 $$ s = \sum_{i=1}^ns_i = \sum_{i=1}^n(a_i \cdot c \cdot x_i + r_i) $$
+
 $$ \tilde X = \prod_{i=1}^nX_i^{a_i} $$
+
 $$ R = \prod_{i=1}^ng^{r_i} $$
 
 It follows that:
+
 $$ g^s = R \cdot \tilde X^c $$
 
 $$
