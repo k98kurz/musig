@@ -16,3 +16,9 @@ from musig.signature import Signature
 from musig.protocol import ProtocolState, ProtocolError, ProtocolMessage
 from musig.singlesigkey import SingleSigKey
 from musig.signingsession import SigningSession
+
+__version__ = '0.1.0'
+
+def version() -> str:
+    """Return the version of the package."""
+    return __version__

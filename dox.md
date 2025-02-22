@@ -399,6 +399,10 @@ XOR two equal-length byte strings together.
 
 Timing-attack safe bytes comparison.
 
+### `version() -> str:`
+
+Return the version of the package.
+
 ## Values
 
 - `MAX_WAIT_TIME_FOR_COMMITMENTS`: int
