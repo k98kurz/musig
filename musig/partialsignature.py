@@ -11,16 +11,13 @@ class PartialSignature(AbstractPartialSignature):
     """A class that handles creation, serialization, and deserialization of
         partial signatures used to create MuSig aggregate signatures.
     """
-    def __init__(self, data: dict = None) -> None:
+    def __init__(self, data: dict) -> None:
         """Initialize an instance with dict.
             At a minimum data should include s_i key with base64-encoded value
             of 32 bytes; keys of c_i and R with base64-encoded value of 32 bytes
             each are optional; key of M with base64-encoded value of bytes is
             also optional.
         """
-        if data is None:
-            raise ValueError('cannot instantiate PartialSignature with None')
-
         if not isinstance(data, dict):
             raise TypeError('data must be type dict')
 
@@ -87,7 +84,7 @@ class PartialSignature(AbstractPartialSignature):
         return self.__class__({'s_i': self.s_i})
 
     @property
-    def c_i(self):
+    def c_i(self) -> bytes|None:
         """The non-interactive challenge for the participant."""
         return self._c_i if hasattr(self, '_c_i') else None
 
@@ -102,7 +99,7 @@ class PartialSignature(AbstractPartialSignature):
         self['c_i'] = data
 
     @property
-    def s_i(self):
+    def s_i(self) -> bytes|None:
         """The partial signature scalar."""
         return self._s_i if hasattr(self, '_s_i') else None
 
@@ -117,7 +114,7 @@ class PartialSignature(AbstractPartialSignature):
         self['s_i'] = data
 
     @property
-    def R(self):
+    def R(self) -> bytes|None:
         """The aggregate nonce point."""
         return self._R if hasattr(self, '_R') else None
 
@@ -132,7 +129,7 @@ class PartialSignature(AbstractPartialSignature):
         self['R'] = data
 
     @property
-    def M(self):
+    def M(self) -> bytes|None:
         """The message to be signed."""
         return self._M if hasattr(self, '_M') else None
 

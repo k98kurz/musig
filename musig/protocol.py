@@ -320,8 +320,32 @@ class ProtocolMessage(AbstractProtocolMessage):
             return False
 
     @classmethod
-    def create(cls, id: UUID, state: ProtocolState, data: list) -> ProtocolMessage:
-        """Create a new instance with the given id, state, and data."""
+    def create(cls, id: UUID|None, state: ProtocolState, data: list) -> ProtocolMessage:
+        """Create a new instance with the given id, state, and data.
+            If the state is EMPTY, the id is ignored.
+
+            If the state is SENDING_PARTICIPANT_KEY, ACK_PARTICIPANT_KEY,
+            REJECT_PARTICIPANT_KEY, AWAITING_COMMITMENT, AWAITING_NONCE, or
+            AWAITING_PARTIAL_SIGNATURE, the data must be a list of
+            VerifyKey|bytes.
+
+            If the state is SENDING_COMMITMENT, ACK_COMMITMENT, or
+            REJECT_COMMITMENT, the data must be a list of NonceCommitment|bytes.
+
+            If the state is SENDING_MESSAGE, ACK_MESSAGE, or REJECT_MESSAGE, the
+            data must be a list of str|bytes.
+
+            If the state is SENDING_NONCE, ACK_NONCE, or REJECT_NONCE, the data
+            must be a list of Nonce|bytes.
+
+            If the state is SENDING_PARTIAL_SIGNATURE, ACK_PARTIAL_SIGNATURE, or
+            REJECT_PARTIAL_SIGNATURE, the data must be a list of
+            PartialSignature|bytes.
+
+            If the state is COMPLETED, the data must be a Signature|bytes.
+
+            If the state is ABORTED, the data must be a ProtocolError|bytes.
+        """
         if not isinstance(id, UUID) and state is not ProtocolState.EMPTY:
             raise TypeError('id must be a valid UUID for non-EMPTY state')
 
@@ -447,7 +471,7 @@ class ProtocolMessage(AbstractProtocolMessage):
 
     # properties
     @property
-    def session_id(self):
+    def session_id(self) -> UUID|None:
         """The UUID of the signing session for which this message was constructed."""
         return self._session_id if hasattr(self, '_session_id') else None
 
@@ -461,7 +485,7 @@ class ProtocolMessage(AbstractProtocolMessage):
         self._session_id = UUID(bytes=data) if type(data) is bytes else data
 
     @property
-    def state(self):
+    def state(self) -> ProtocolState:
         """The protocol state of the message."""
         return self._state if hasattr(self, '_state') else None
 
@@ -475,7 +499,7 @@ class ProtocolMessage(AbstractProtocolMessage):
         self._state = data
 
     @property
-    def message(self):
+    def message(self) -> bytes:
         """The message itself."""
         return self._message if hasattr(self, '_message') else None
 
@@ -488,7 +512,7 @@ class ProtocolMessage(AbstractProtocolMessage):
         self['message'] = data if type(data) is bytes else bytes(data, 'utf-8')
 
     @property
-    def message_parts(self):
+    def message_parts(self) -> tuple:
         """The things that serialize into and deserialize from self.message."""
         return self._message_parts if hasattr(self, '_message_parts') else tuple()
 
@@ -501,7 +525,7 @@ class ProtocolMessage(AbstractProtocolMessage):
         self['message_parts'] = tuple(data)
 
     @property
-    def signature(self):
+    def signature(self) -> NaclSignedMessage|None:
         """The Signature result of add_signature."""
         return self._signature if hasattr(self, '_signature') else None
 
@@ -514,7 +538,7 @@ class ProtocolMessage(AbstractProtocolMessage):
         self['signature'] = data
 
     @property
-    def vkey(self):
+    def vkey(self) -> VerifyKey|None:
         """The VerifyKey used to verify the signature."""
         return self._vkey if hasattr(self, '_vkey') else None
 

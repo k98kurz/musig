@@ -10,7 +10,7 @@ class TestMuSigNonceCommitment(unittest.TestCase):
         assert inspect.isclass(musig.NonceCommitment)
 
     def test_NonceCommitment_init_raises_ValueErroror_TypeError_with_empty_or_invalid_params(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             musig.NonceCommitment()
         with self.assertRaises(TypeError):
             musig.NonceCommitment('invalid input')

@@ -21,11 +21,6 @@ class TestMuSigPartialSignature(unittest.TestCase):
     def test_PartialSignature_is_a_class(self):
         assert inspect.isclass(musig.PartialSignature)
 
-    def test_PartialSignature_init_raises_ValueError_when_called_without_param(self):
-        with self.assertRaises(ValueError) as err:
-            musig.PartialSignature()
-        assert str(err.exception) == 'cannot instantiate PartialSignature with None'
-
     def test_PartialSignature_init_raises_TypeError_when_called_with_invalid_input(self):
         with self.assertRaises(TypeError) as err:
             musig.PartialSignature('not a dict')

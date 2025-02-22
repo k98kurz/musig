@@ -102,7 +102,7 @@ class PublicKey(AbstractPublicKey):
         return bytes_are_same(gs, RXc)
 
     @classmethod
-    def aggregate_public_keys(cls, vkeys: list, key_set_L=None) -> bytes:
+    def aggregate_public_keys(cls, vkeys: list[VerifyKey|bytes], key_set_L: bytes = None) -> bytes:
         """Calculate the aggregate public key from the participant keys."""
         # parse arguments
         vkeys = [vk if type(vk) is VerifyKey else VerifyKey(vk) for vk in vkeys]
@@ -137,7 +137,7 @@ class PublicKey(AbstractPublicKey):
 
     # define some properties
     @property
-    def L(self):
+    def L(self) -> bytes:
         """The keyset encoding used for calculating partial signatures."""
         return self._L if hasattr(self, '_L') else None
 
@@ -152,7 +152,7 @@ class PublicKey(AbstractPublicKey):
         self['L'] = data
 
     @property
-    def gvkey(self):
+    def gvkey(self) -> bytes:
         """The bytes of the aggregate key (denoted X in the MuSig paper)."""
         return self._gvkey if hasattr(self, '_gvkey') else None
 
@@ -167,12 +167,12 @@ class PublicKey(AbstractPublicKey):
         self['gvkey'] = data
 
     @property
-    def vkeys(self):
+    def vkeys(self) -> tuple[VerifyKey, ...]:
         """Tuple of untransformed participant VerifyKeys."""
         return self._vkeys if hasattr(self, '_vkeys') else tuple()
 
     @vkeys.setter
-    def vkeys(self, data: list):
+    def vkeys(self, data: list[VerifyKey]):
         """Tuple of untransformed participant VerifyKeys."""
         if type(data) not in (list, tuple):
             raise TypeError('vkeys must be list or tuple of VerifyKeys')

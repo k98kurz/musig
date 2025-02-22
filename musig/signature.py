@@ -52,7 +52,7 @@ class Signature(AbstractSignature):
         })
 
     @classmethod
-    def create(cls, R: bytes, M: bytes, parts: list) -> dict:
+    def create(cls, R: bytes, M: bytes, parts: list[AbstractPartialSignature]) -> Signature:
         """Create a new instance using the aggregate nonce point (R), the
             message (M), and the list/tuple of partial signatures (scalars s_i).
         """
@@ -81,7 +81,7 @@ class Signature(AbstractSignature):
         })
 
     @property
-    def R(self):
+    def R(self) -> bytes:
         """Aggregate nonce point."""
         return self._R if hasattr(self, '_R') else None
 
@@ -96,7 +96,7 @@ class Signature(AbstractSignature):
         self['R'] = data
 
     @property
-    def s(self):
+    def s(self) -> bytes:
         """Aggregate signature made from summing partial signatures."""
         return self._s if hasattr(self, '_s') else None
 
@@ -111,7 +111,7 @@ class Signature(AbstractSignature):
         self['s'] = data
 
     @property
-    def M(self):
+    def M(self) -> bytes:
         """Message to be signed."""
         return self._M if hasattr(self, '_M') else None
 
@@ -124,12 +124,12 @@ class Signature(AbstractSignature):
         self['M'] = data if type(data) is bytes else bytes(data, 'utf-8')
 
     @property
-    def parts(self):
+    def parts(self) -> tuple[AbstractPartialSignature, ...]:
         """Tuple of partial signatures summed together to create the signature."""
         return self._parts if hasattr(self, '_parts') else tuple()
 
     @parts.setter
-    def parts(self, data: list):
+    def parts(self, data: list[AbstractPartialSignature]):
         """Tuple of partial signatures summed together to create the signature."""
         if type(data) not in (list, tuple):
             raise TypeError('parts must be list or tuple of PartialSignatures')

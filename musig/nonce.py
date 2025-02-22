@@ -32,7 +32,7 @@ class Nonce(AbstractNonce):
                 self.r = r if type(r) is bytes else b64decode(r)
                 self.R = nacl.bindings.crypto_scalarmult_ed25519_base_noclamp(self.r)
 
-    def __bytes__(self):
+    def __bytes__(self) -> bytes:
         """Result of calling bytes() on an instance."""
         if self.r is not None:
             return b'r' + self.r
@@ -75,12 +75,12 @@ class Nonce(AbstractNonce):
 
     # properties
     @property
-    def r(self):
+    def r(self) -> bytes|None:
         """The private scalar value."""
         return self._r if hasattr(self, '_r') else None
 
     @r.setter
-    def r(self, value):
+    def r(self, value: bytes):
         """The private scalar value."""
         if not isinstance(value, bytes):
             raise TypeError('r value must be bytes')
@@ -90,12 +90,12 @@ class Nonce(AbstractNonce):
         self['r'] = value
 
     @property
-    def R(self):
+    def R(self) -> bytes|None:
         """The public point value."""
         return self._R if hasattr(self, '_R') else None
 
     @R.setter
-    def R(self, value):
+    def R(self, value: bytes):
         """The public point value."""
         if not isinstance(value, bytes):
             raise TypeError('R value must be bytes')

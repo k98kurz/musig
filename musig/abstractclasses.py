@@ -1,5 +1,5 @@
 from __future__ import annotations
-from abc import abstractclassmethod, abstractmethod, abstractproperty
+from abc import abstractmethod
 from base64 import b64encode
 from enum import EnumMeta
 from musig import bytes_are_same
@@ -68,7 +68,8 @@ class ExtendedDict(dict):
             return False
         return bytes_are_same(bytes(self), bytes(other))
 
-    @abstractclassmethod
+    @classmethod
+    @abstractmethod
     def from_bytes(cls, data: bytes) -> ExtendedDict:
         """Deserializes output from __bytes__. Must be implemented for from_str
             to function.
@@ -98,19 +99,22 @@ class AbstractNonce(ExtendedDict):
         """Return a copy of the instance with only the public point value (R)."""
         ...
 
-    @abstractproperty
-    def r(self):
+    @property
+    @abstractmethod
+    def r(self) -> bytes:
         """The private scalar value."""
         ...
 
-    @abstractproperty
-    def R(self):
+    @property
+    @abstractmethod
+    def R(self) -> bytes:
         """The public point value."""
         ...
 
 
 class AbstractNonceCommitment(ExtendedDict):
-    @abstractclassmethod
+    @classmethod
+    @abstractmethod
     def create(cls, nonce: AbstractNonce) -> AbstractNonceCommitment:
         """Create a new instance by hashing the given nonce."""
         ...
@@ -125,14 +129,14 @@ class AbstractNonceCommitment(ExtendedDict):
         """Check if the current instance is a valid commitment for a given nonce."""
         ...
 
-    @abstractproperty
-    def HR(self):
+    @property
+    def HR(self) -> bytes:
         """The nonce commitment bytes (hash of a nonce point)."""
         ...
 
 
 class AbstractPartialSignature(ExtendedDict):
-    @abstractclassmethod
+    @classmethod
     def create(cls, skey: SigningKey, r: bytes, L: bytes, X: AbstractPublicKey,
             R: bytes, M: bytes) -> dict:
         """Create a new instance using the SigningKey of the participant (skey),
@@ -148,29 +152,34 @@ class AbstractPartialSignature(ExtendedDict):
         """Return a copy of the instance with only the public value (s_i)."""
         ...
 
-    @abstractproperty
-    def c_i(self):
+    @property
+    @abstractmethod
+    def c_i(self) -> bytes:
         """The non-interactive challenge for the participant."""
         ...
 
-    @abstractproperty
-    def s_i(self):
+    @property
+    @abstractmethod
+    def s_i(self) -> bytes:
         """The partial signature scalar."""
         ...
 
-    @abstractproperty
-    def R(self):
+    @property
+    @abstractmethod
+    def R(self) -> bytes:
         """The aggregate nonce point."""
         ...
 
-    @abstractproperty
-    def M(self):
+    @property
+    @abstractmethod
+    def M(self) -> bytes:
         """The message to be signed."""
         ...
 
 
 class AbstractPublicKey(ExtendedDict):
-    @abstractclassmethod
+    @classmethod
+    @abstractmethod
     def create(cls, keys: list) -> AbstractPublicKey:
         """Create a new instance from a list/tuple of participant VerifyKeys.
             This must derive the keyset encoding (L) and the aggregate key
@@ -188,12 +197,14 @@ class AbstractPublicKey(ExtendedDict):
         """Check if a given signature is valid for the current aggregate key."""
         ...
 
-    @abstractclassmethod
-    def aggregate_public_keys(cls, vkeys: list, key_set_L=None) -> bytes:
+    @classmethod
+    @abstractmethod
+    def aggregate_public_keys(cls, vkeys: list[VerifyKey|bytes], key_set_L: bytes = None) -> bytes:
         """Calculate the aggregate public key from the participant keys."""
         ...
 
-    @abstractclassmethod
+    @classmethod
+    @abstractmethod
     def pre_agg_key_transform(cls, vkey: VerifyKey, key_set_L: bytes) -> bytes:
         """Transform a participant VerifyKey prior to calculating the aggregate
             public key. This is called by aggregate_public_keys on every
@@ -201,54 +212,63 @@ class AbstractPublicKey(ExtendedDict):
         """
         ...
 
-    @abstractclassmethod
+    @classmethod
+    @abstractmethod
     def encode_key_set(cls, vkeys: list) -> bytes:
         """Sort the participant keys into a deterministic order, then hash the
             list to produce the keyset encoding (L).
         """
         ...
 
-    @abstractproperty
-    def L(self):
+    @property
+    @abstractmethod
+    def L(self) -> bytes:
         """The keyset encoding used for calculating partial signatures."""
         ...
 
-    @abstractproperty
-    def gvkey(self):
+    @property
+    @abstractmethod
+    def gvkey(self) -> bytes:
         """The bytes of the aggregate key (denoted X in the MuSig paper)."""
         ...
 
-    @abstractproperty
-    def vkeys(self):
+    @property
+    @abstractmethod
+    def vkeys(self) -> tuple[VerifyKey, ...]:
         """Tuple of untransformed participant VerifyKeys."""
         ...
 
 
 class AbstractSignature(ExtendedDict):
-    @abstractclassmethod
-    def create(cls, R: bytes, M: bytes, parts: list) -> dict:
+    @classmethod
+    @abstractmethod
+    def create(cls, R: bytes, M: bytes, parts: list[AbstractPartialSignature]) -> AbstractSignature:
         """Create a new instance using the aggregate nonce point (R), the
             message (M), and the list/tuple of partial signatures (scalars s_i).
         """
         ...
 
-    @abstractproperty
-    def R(self):
+    @property
+    @abstractmethod
+    def R(self) -> bytes:
         """Aggregate nonce point."""
         ...
 
-    @abstractproperty
-    def s(self):
+    @property
+    @abstractmethod
+    def s(self) -> bytes:
         """Aggregate signature made from summing partial signatures."""
         ...
 
-    @abstractproperty
-    def M(self):
+    @property
+    @abstractmethod
+    def M(self) -> bytes:
         """Message to be signed."""
         ...
 
-    @abstractproperty
-    def parts(self):
+    @property
+    @abstractmethod
+    def parts(self) -> tuple[AbstractPartialSignature, ...]:
         """Tuple of partial signatures summed together to create the signature."""
         ...
 
@@ -259,18 +279,21 @@ class AbstractSingleSigKey(ExtendedDict):
         """Sign a message (M) and return a signature."""
         ...
 
-    @abstractproperty
-    def skey(self):
+    @property
+    @abstractmethod
+    def skey(self) -> SigningKey|None:
         """The SigningKey used for creating signatures."""
         ...
 
-    @abstractproperty
-    def vkey(self):
+    @property
+    @abstractmethod
+    def vkey(self) -> AbstractPublicKey|None:
         """The aggregate public key for verifying signatures."""
         ...
 
-    @abstractproperty
-    def vkey_base(self):
+    @property
+    @abstractmethod
+    def vkey_base(self) -> VerifyKey|None:
         """The VerifyKey base used to calculate the aggregate public key."""
         ...
 
@@ -304,47 +327,54 @@ class AbstractProtocolMessage(ExtendedDict):
         """
         ...
 
-    @abstractclassmethod
-    def create(cls, id: UUID, state: AbstractProtocolState, data: list) -> AbstractProtocolMessage:
+    @classmethod
+    @abstractmethod
+    def create(cls, id: UUID|None, state: AbstractProtocolState, data: list) -> AbstractProtocolMessage:
         """Create a new instance with the given id, state, and data.
             NB: id=None should be accepted only for state=EMPTY.
         """
         ...
 
-    @abstractproperty
-    def session_id(self):
+    @property
+    @abstractmethod
+    def session_id(self) -> UUID:
         """The UUID of the signing session for which this message was constructed."""
         ...
 
-    @abstractproperty
-    def state(self):
+    @property
+    @abstractmethod
+    def state(self) -> AbstractProtocolState:
         """The protocol state of the message."""
         ...
 
-    @abstractproperty
-    def message(self):
+    @property
+    @abstractmethod
+    def message(self) -> bytes:
         """The message itself."""
         ...
 
-    @abstractproperty
-    def message_parts(self):
+    @property
+    @abstractmethod
+    def message_parts(self) -> list:
         """The things that serialize into and deserialize from self.message."""
         ...
 
-    @abstractproperty
-    def signature(self):
+    @property
+    @abstractmethod
+    def signature(self) -> AbstractSignature:
         """The Signature result of add_signature."""
         ...
 
-    @abstractproperty
-    def vkey(self):
+    @property
+    @abstractmethod
+    def vkey(self) -> AbstractPublicKey:
         """The VerifyKey used to verify the signature."""
         ...
 
 
 class AbstractSigningSession(ExtendedDict):
     @abstractmethod
-    def add_participant_keys(self, keys) -> None:
+    def add_participant_keys(self, keys: VerifyKey|list[VerifyKey]) -> None:
         """Add participant VerifyKey(s)."""
         ...
 
@@ -375,43 +405,51 @@ class AbstractSigningSession(ExtendedDict):
         """
         ...
 
-    @abstractproperty
-    def id(self):
+    @property
+    @abstractmethod
+    def id(self) -> UUID:
         """The UUID of the session."""
         ...
 
-    @abstractproperty
-    def number_of_participants(self):
+    @property
+    @abstractmethod
+    def number_of_participants(self) -> int:
         """The number of participants expected to participate in the protocol."""
         ...
 
-    @abstractproperty
-    def protocol_state(self):
+    @property
+    @abstractmethod
+    def protocol_state(self) -> AbstractProtocolState:
         """The current state of the session."""
         ...
 
-    @abstractproperty
-    def last_updated(self):
+    @property
+    @abstractmethod
+    def last_updated(self) -> int:
         """A timestamp recording the last time the protocol state was updated."""
         ...
 
-    @abstractproperty
-    def skey(self):
+    @property
+    @abstractmethod
+    def skey(self) -> SigningKey:
         """The SigningKey of the participant using this instance."""
         ...
 
-    @abstractproperty
-    def vkeys(self):
+    @property
+    @abstractmethod
+    def vkeys(self) -> tuple[VerifyKey, ...]:
         """A tuple of participant VerifyKeys."""
         ...
 
-    @abstractproperty
-    def nonce_commitments(self):
+    @property
+    @abstractmethod
+    def nonce_commitments(self) -> dict[VerifyKey, AbstractNonceCommitment]:
         """A dict mapping participant VerifyKey to NonceCommitment."""
         ...
 
-    @abstractproperty
-    def nonce_points(self):
+    @property
+    @abstractmethod
+    def nonce_points(self) -> dict[VerifyKey, AbstractNonce]:
         """A dict mapping participant VerifyKey to Nonce. Note that the Nonce
             for the participant using this instance will include the private
             scalar value, but the Nonces of other participants will include only
@@ -419,29 +457,34 @@ class AbstractSigningSession(ExtendedDict):
         """
         ...
 
-    @abstractproperty
-    def aggregate_nonce(self):
+    @property
+    @abstractmethod
+    def aggregate_nonce(self) -> AbstractNonce:
         """The aggregate nonce point for the session."""
         ...
 
-    @abstractproperty
-    def message(self):
+    @property
+    @abstractmethod
+    def message(self) -> bytes:
         """The message to be n-of-n signed."""
         ...
 
-    @abstractproperty
-    def partial_signatures(self):
+    @property
+    @abstractmethod
+    def partial_signatures(self) -> dict[VerifyKey, AbstractPartialSignature]:
         """A dict mapping participant VerifyKey to PartialSignature (public
             values s_i only).
         """
         ...
 
-    @abstractproperty
-    def public_key(self):
+    @property
+    @abstractmethod
+    def public_key(self) -> AbstractPublicKey:
         """The aggregate public key for the session."""
         ...
 
-    @abstractproperty
-    def signature(self):
+    @property
+    @abstractmethod
+    def signature(self) -> AbstractSignature:
         """The final n-of-n signature."""
         ...

@@ -9,7 +9,7 @@ from nacl.signing import SigningKey, VerifyKey
 import nacl.bindings
 
 
-def clamp_scalar(scalar: bytes, from_private_key: bool = False) -> bytes:
+def clamp_scalar(scalar: bytes|SigningKey, from_private_key: bool = False) -> bytes:
     """Make a clamped scalar."""
     if type(scalar) is bytes and len(scalar) >= 32:
         x_i = bytearray(scalar[:32])
@@ -31,7 +31,7 @@ def clamp_scalar(scalar: bytes, from_private_key: bool = False) -> bytes:
 
     return bytes(x_i)
 
-def aggregate_points(points: list) -> bytes:
+def aggregate_points(points: list[bytes|VerifyKey]) -> bytes:
     """Aggregate points on the Ed25519 curve."""
     # type checking inputs
     for pt in points:
@@ -53,11 +53,11 @@ def aggregate_points(points: list) -> bytes:
 
     return sum
 
-def H_big(*parts) -> bytes:
+def H_big(*parts: bytes) -> bytes:
     """The big, 64-byte hash function."""
     return new('sha512', b''.join(parts)).digest()
 
-def H_small(*parts) -> bytes:
+def H_small(*parts: bytes) -> bytes:
     """The small, 32-byte hash function."""
     return nacl.bindings.crypto_core_ed25519_scalar_reduce(H_big(*parts))
 

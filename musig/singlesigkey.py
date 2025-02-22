@@ -77,7 +77,7 @@ class SingleSigKey(AbstractSingleSigKey):
         return Signature.create(nonce.R, M, [sig])
 
     @property
-    def skey(self):
+    def skey(self) -> SigningKey|None:
         """The SigningKey used for creating signatures."""
         return self._skey if hasattr(self, '_skey') else None
 
@@ -90,7 +90,7 @@ class SingleSigKey(AbstractSingleSigKey):
         self['skey'] = data
 
     @property
-    def vkey(self):
+    def vkey(self) -> PublicKey|None:
         """The aggregate public key for verifying signatures."""
         return self._vkey if hasattr(self, '_vkey') else None
 
@@ -103,7 +103,7 @@ class SingleSigKey(AbstractSingleSigKey):
         self['vkey'] = data
 
     @property
-    def vkey_base(self):
+    def vkey_base(self) -> VerifyKey|None:
         """The VerifyKey base used to calculate the aggregate public key."""
         return self._vkey_base if hasattr(self, '_vkey_base') else None
 

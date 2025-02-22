@@ -9,11 +9,8 @@ class NonceCommitment(AbstractNonceCommitment):
         commitments.
     """
 
-    def __init__(self, data: dict = None) -> None:
+    def __init__(self, data: dict) -> None:
         """Initialize with a dict."""
-        if data is None:
-            raise ValueError('cannot instantiate an empty NonceCommitment')
-
         if type(data) is not dict:
             raise TypeError('data must be type dict')
 
@@ -60,7 +57,7 @@ class NonceCommitment(AbstractNonceCommitment):
         return cls({'HR': data})
 
     @property
-    def HR(self):
+    def HR(self) -> bytes|None:
         """The nonce commitment bytes (hash of a nonce point)."""
         return self._HR if hasattr(self, '_HR') else None
 
