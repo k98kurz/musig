@@ -23,7 +23,7 @@ please submit the bug report by opening an issue.
 ### 1-of-1 MuSig
 
 For 1-of-1 MuSig, use the SingleSigKey class as shown in
-[examples/1-of-1-musig.py](https://github.com/k98kurz/musig/blob/master/examples/2-of-2-musig.py).
+[examples/1-of-1-musig.py](https://github.com/k98kurz/musig/blob/master/examples/1-of-1-musig.py).
 This is unlikely to be useful in practice, but it is hopefully helpful in making
 the process more understandable -- n-of-n MuSig requires a minimum of 3
 communication rounds, so the 1-of-1 SingleSigKey exists to demonstrate the
