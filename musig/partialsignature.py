@@ -1,6 +1,5 @@
 from __future__ import annotations
-from base64 import b64encode, b64decode
-from json import loads
+from base64 import b64decode
 from musig.abstractclasses import AbstractPublicKey, AbstractPartialSignature
 from musig.helpers import derive_key_from_seed, derive_challenge
 from nacl.signing import SigningKey

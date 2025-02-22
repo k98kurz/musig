@@ -1,9 +1,6 @@
 """1-of-1 example"""
 
 
-import sys
-import os
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from musig import SingleSigKey
 from nacl.signing import SigningKey, VerifyKey, SignedMessage
 from secrets import token_bytes
