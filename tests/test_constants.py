@@ -1,5 +1,4 @@
 from context import musig
-from nacl.signing import SigningKey
 import unittest
 
 

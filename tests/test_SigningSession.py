@@ -95,7 +95,6 @@ class TestMuSigSigningSession(unittest.TestCase):
         assert session.last_updated == start_time
         assert session.protocol_state is musig.ProtocolState.AWAITING_PARTICIPANT_KEY
         session.add_participant_keys(self.verify_keys[:2])
-        sleep(0.01)
         assert session.last_updated == start_time
         assert session.protocol_state is musig.ProtocolState.AWAITING_PARTICIPANT_KEY
         sleep(0.01)

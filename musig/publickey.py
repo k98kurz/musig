@@ -63,7 +63,7 @@ class PublicKey(AbstractPublicKey):
         return cls({'vkeys': vkeys}) if len(vkeys) > 1 else cls({'gvkey': gvkey})
 
     @classmethod
-    def create(cls, vkeys: list) -> PublicKey:
+    def create(cls, vkeys: list[VerifyKey|bytes]) -> PublicKey:
         """Create a new PublicKey from a list or tuple of participant VerifyKeys."""
         if type(vkeys) not in (list, tuple):
             raise TypeError('vkeys must be list or tuple of VerifyKey')
